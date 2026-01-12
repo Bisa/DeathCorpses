@@ -1,9 +1,9 @@
 using CommonLib.Config;
-using PlayerCorpse.Entities;
-using PlayerCorpse.Items;
+using PlayerGrave.Entities;
+using PlayerGrave.Items;
 using Vintagestory.API.Common;
 
-namespace PlayerCorpse
+namespace PlayerGrave
 {
     public class Core : ModSystem
     {
@@ -16,8 +16,8 @@ namespace PlayerCorpse
 
             api.World.Config.SetBool($"{Mod.Info.ModID}:CorpseCompassEnabled", Config.CorpseCompassEnabled);
 
-            api.RegisterEntity("EntityPlayerCorpse", typeof(EntityPlayerCorpse));
-            api.RegisterItemClass("ItemCorpseCompass", typeof(ItemCorpseCompass));
+            api.RegisterEntity("EntityPlayerCorpse", typeof(EntityPlayerGrave));
+            api.RegisterItemClass("ItemCorpseCompass", typeof(ItemGraveCompass));
         }
 
         public override void AssetsLoaded(ICoreAPI api)

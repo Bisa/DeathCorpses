@@ -1,6 +1,6 @@
 using CommonLib.Extensions;
 using CommonLib.Utils;
-using PlayerCorpse.Entities;
+using PlayerGrave.Entities;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -9,9 +9,9 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace PlayerCorpse.Items
+namespace PlayerGrave.Items
 {
-    public class ItemCorpseCompass : Item
+    public class ItemGraveCompass : Item
     {
         public static long SearchCooldown => 5000;
         public static long OffHandSearchCooldown => 10000;
@@ -118,7 +118,7 @@ namespace PlayerCorpse.Items
             if (api.Side == EnumAppSide.Server && byEntity is EntityPlayer playerEntity)
             {
                 double distance = double.MaxValue;
-                EntityPlayerCorpse? nearestCorpse = null;
+                EntityPlayerGrave? nearestCorpse = null;
 
                 string? ownerUID = playerEntity.PlayerUID;
                 if (playerEntity.Player.WorldData.CurrentGameMode == EnumGameMode.Creative)
@@ -126,7 +126,7 @@ namespace PlayerCorpse.Items
                     ownerUID = null; // show all corpses in creative
                 }
 
-                foreach (EntityPlayerCorpse corpse in GetCorpsesAround(SearchRadius, byEntity.ServerPos.XYZInt, ownerUID))
+                foreach (EntityPlayerGrave corpse in GetCorpsesAround(SearchRadius, byEntity.ServerPos.XYZInt, ownerUID))
                 {
                     double currDistance = byEntity.Pos.SquareDistanceTo(corpse.Pos);
                     if (currDistance <= distance)
@@ -160,7 +160,7 @@ namespace PlayerCorpse.Items
             }
         }
 
-        private IEnumerable<EntityPlayerCorpse> GetCorpsesAround(int radius, Vec3i pos, string? playerUID = null)
+        private IEnumerable<EntityPlayerGrave> GetCorpsesAround(int radius, Vec3i pos, string? playerUID = null)
         {
             foreach (IServerChunk chunk in GetAllChunksAround(radius, pos))
             {
@@ -168,7 +168,7 @@ namespace PlayerCorpse.Items
                 {
                     foreach (var entity in chunk.Entities)
                     {
-                        if (entity is EntityPlayerCorpse corpseEntity)
+                        if (entity is EntityPlayerGrave corpseEntity)
                         {
                             if (playerUID == null || corpseEntity.OwnerUID == playerUID)
                             {

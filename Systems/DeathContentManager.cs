@@ -1,7 +1,7 @@
 using CommonLib.Extensions;
 using CommonLib.Utils;
 using HarmonyLib;
-using PlayerCorpse.Entities;
+using PlayerGrave.Entities;
 using System;
 using System.Drawing;
 using System.IO;
@@ -16,12 +16,12 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
-namespace PlayerCorpse.Systems
+namespace PlayerGrave.Systems
 {
     public class DeathContentManager : ModSystem
     {
-        private static readonly MethodInfo _resendWaypointsMethod = AccessTools.Method(typeof(WaypointMapLayer), "ResendWaypoints");
-        private static readonly MethodInfo _rebuildMapComponentsMethod = AccessTools.Method(typeof(WaypointMapLayer), "RebuildMapComponents");
+        //private static readonly MethodInfo _resendWaypointsMethod = AccessTools.Method(typeof(WaypointMapLayer), "ResendWaypoints");
+        //private static readonly MethodInfo _rebuildMapComponentsMethod = AccessTools.Method(typeof(WaypointMapLayer), "RebuildMapComponents");
 
         private ICoreServerAPI _sapi = null!;
 
@@ -98,11 +98,11 @@ namespace PlayerCorpse.Systems
             }
         }
 
-        private EntityPlayerCorpse CreateCorpseEntity(IServerPlayer byPlayer)
+        private EntityPlayerGrave CreateCorpseEntity(IServerPlayer byPlayer)
         {
-            var entityType = _sapi.World.GetEntityType(new AssetLocation(Constants.ModId, "playercorpse"));
+            var entityType = _sapi.World.GetEntityType(new AssetLocation(Constants.ModId, "playergrave"));
 
-            if (_sapi.World.ClassRegistry.CreateEntity(entityType) is not EntityPlayerCorpse corpse)
+            if (_sapi.World.ClassRegistry.CreateEntity(entityType) is not EntityPlayerGrave corpse)
             {
                 throw new Exception("Unable to instantiate player corpse");
             }
@@ -146,7 +146,7 @@ namespace PlayerCorpse.Systems
 
         private InventoryGeneric TakeContentFromPlayer(IServerPlayer byPlayer)
         {
-            var inv = new InventoryGeneric(GetMaxCorpseSlots(byPlayer), $"playercorpse-{byPlayer.PlayerUID}", _sapi);
+            var inv = new InventoryGeneric(GetMaxCorpseSlots(byPlayer), $"playergrave-{byPlayer.PlayerUID}", _sapi);
 
             int lastSlotId = 0;
             foreach (var invClassName in Core.Config.SaveInventoryTypes)
@@ -215,59 +215,84 @@ namespace PlayerCorpse.Systems
             return slot.TakeOutWhole();
         }
 
-        public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
+        //public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
+        //{
+        //    if (byPlayer.Api is ICoreServerAPI)
+        //    {
+        //        var mapLayer = GetMapLayer(byPlayer.Api);
+
+        //        if (mapLayer is null)
+        //        {
+        //            byPlayer.Api.Logger.Error("Failed to create waypoint, maplayer is null");
+        //            return;
+        //        }
+
+        //        Waypoint wp = new()
+        //        {
+        //            Position = byPlayer.ServerPos.AsBlockPos.ToVec3d(),
+        //            Title = Lang.Get($"{Constants.ModId}:death-waypoint-name", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+        //            Pinned = Core.Config.PinWaypoint,
+        //            Icon = Core.Config.WaypointIcon,
+        //            Color = ColorTranslator.FromHtml(Core.Config.WaypointColor).ToArgb(),
+        //            OwningPlayerUid = byPlayer.PlayerUID,
+        //            Guid = corpseEntity.CorpseId.ToString()
+        //        };
+
+        //        mapLayer.AddWaypoint(wp, byPlayer.Player as IServerPlayer);
+        //    }
+        //}
+
+        public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave corpseEntity)
         {
-            if (byPlayer.Api is ICoreServerAPI)
-            {
-                var mapLayer = GetMapLayer(byPlayer.Api);
+            if (byPlayer?.Api is not ICoreServerAPI sapi) return;
 
-                if (mapLayer is null)
-                {
-                    byPlayer.Api.Logger.Error("Failed to create waypoint, maplayer is null");
-                    return;
-                }
+            var sp = byPlayer.Player as IServerPlayer;
+            if (sp == null) return;
 
-                Waypoint wp = new()
-                {
-                    Position = byPlayer.ServerPos.AsBlockPos.ToVec3d(),
-                    Title = Lang.Get($"{Constants.ModId}:death-waypoint-name", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
-                    Pinned = Core.Config.PinWaypoint,
-                    Icon = Core.Config.WaypointIcon,
-                    Color = ColorTranslator.FromHtml(Core.Config.WaypointColor).ToArgb(),
-                    OwningPlayerUid = byPlayer.PlayerUID,
-                    Guid = corpseEntity.CorpseId.ToString()
-                };
+            int x = (int)byPlayer.ServerPos.X;
+            int y = (int)byPlayer.ServerPos.Y;
+            int z = (int)byPlayer.ServerPos.Z;
 
-                mapLayer.AddWaypoint(wp, byPlayer.Player as IServerPlayer);
-            }
+            string pinned = Core.Config.PinWaypoint ? "true" : "false";
+            string color = Core.Config.WaypointColor;   // can be hex or color name
+            string icon = Core.Config.WaypointIcon;
+
+            // Quote the title so spaces are safe
+            string title = Lang.Get($"{Constants.ModId}:death-waypoint-name", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            sapi.HandleCommand(sp, $"/waypoint addati {icon} {x} {y} {z} {pinned} {color} \"{title}\"");
         }
 
-        private static WaypointMapLayer? GetMapLayer(ICoreAPI api)
+        //private static WaypointMapLayer? GetMapLayer(ICoreAPI api)
+        //{
+        //    return api.ModLoader.GetModSystem<WorldMapManager>().MapLayers.FirstOrDefault(ml => ml is WaypointMapLayer) as WaypointMapLayer;
+        //}
+
+        //public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
+        //{
+        //    if (byPlayer is null || corpseEntity is null) return;
+
+        //    if (byPlayer.Api is ICoreServerAPI sapi)
+        //    {
+        //        var serverPlayer = byPlayer.Player as IServerPlayer;
+        //        var mapLayer = GetMapLayer(sapi);
+        //        var waypoints = mapLayer?.Waypoints ?? [];
+
+        //        //For every waypoint the player owns, check if it matches the corpse entity id and remove it
+        //        foreach (Waypoint waypoint in waypoints.ToList().Where(w => w.OwningPlayerUid == byPlayer.PlayerUID))
+        //        {
+        //            if (waypoint.Guid == corpseEntity.CorpseId.ToString())
+        //            {
+        //                waypoints.Remove(waypoint);
+        //                _resendWaypointsMethod.Invoke(mapLayer, [serverPlayer]);
+        //                _rebuildMapComponentsMethod.Invoke(mapLayer, null);
+        //            }
+        //        }
+        //    }
+        //}
+
+        public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave corpseEntity)
         {
-            return api.ModLoader.GetModSystem<WorldMapManager>().MapLayers.FirstOrDefault(ml => ml is WaypointMapLayer) as WaypointMapLayer;
-        }
-
-        public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
-        {
-            if (byPlayer is null || corpseEntity is null) return;
-
-            if (byPlayer.Api is ICoreServerAPI sapi)
-            {
-                var serverPlayer = byPlayer.Player as IServerPlayer;
-                var mapLayer = GetMapLayer(sapi);
-                var waypoints = mapLayer?.Waypoints ?? [];
-
-                //For every waypoint the player owns, check if it matches the corpse entity id and remove it
-                foreach (Waypoint waypoint in waypoints.ToList().Where(w => w.OwningPlayerUid == byPlayer.PlayerUID))
-                {
-                    if (waypoint.Guid == corpseEntity.CorpseId.ToString())
-                    {
-                        waypoints.Remove(waypoint);
-                        _resendWaypointsMethod.Invoke(mapLayer, [serverPlayer]);
-                        _rebuildMapComponentsMethod.Invoke(mapLayer, null);
-                    }
-                }
-            }
+            // TODO (VS 1.21): implement waypoint removal without WaypointMapLayer internals
         }
 
         public string GetDeathDataPath(IPlayer player)
@@ -316,7 +341,7 @@ namespace PlayerCorpse.Systems
             var tree = new TreeAttribute();
             tree.FromBytes(File.ReadAllBytes(file));
 
-            var inv = new InventoryGeneric(tree.GetInt("qslots"), $"playercorpse-{player.PlayerUID}", player.Entity.Api);
+            var inv = new InventoryGeneric(tree.GetInt("qslots"), $"playergrave-{player.PlayerUID}", player.Entity.Api);
             inv.FromTreeAttributes(tree);
             return inv;
         }

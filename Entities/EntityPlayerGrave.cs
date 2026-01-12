@@ -1,6 +1,6 @@
 using CommonLib.UI;
 using CommonLib.Utils;
-using PlayerCorpse.Systems;
+using PlayerGrave.Systems;
 using System;
 using System.IO;
 using System.Text;
@@ -11,9 +11,9 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace PlayerCorpse.Entities
+namespace PlayerGrave.Entities
 {
-    public class EntityPlayerCorpse : EntityAgent
+    public class EntityPlayerGrave : EntityAgent
     {
         private ILogger? _modLogger;
         private long _lastInteractMs;
@@ -52,6 +52,12 @@ namespace PlayerCorpse.Entities
         {
             get { return WatchedAttributes.GetString("ownerName"); }
             set { WatchedAttributes.SetString("ownerName", value); }
+        }
+
+        public int WaypointID
+        {
+            get => WatchedAttributes.GetInt("waypointID", -1);
+            set => WatchedAttributes.SetInt("waypointID", value);
         }
 
         public bool IsFree

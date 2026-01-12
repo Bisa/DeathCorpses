@@ -1,0 +1,13 @@
+{
+  "type": "code",
+  "name": "Player Grave",
+  "modid": "playergrave",
+  "version": "0.1.1",
+  "website": "https://github.com/Marzz2006/PlayerCorpse_Marzz06",
+  "authors": [ "DArkHekRoMaNT", "Marzz2006" ],
+  "description": "Modified Player Corpse Mod from DArkHekRoMaNT updated for Vintage Story 1.21",
+  "dependencies": {
+    "game": "1.21.0",
+    "commonlib": "2.8.0"
+  }
+}

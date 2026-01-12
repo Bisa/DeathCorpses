@@ -8,7 +8,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
-namespace PlayerCorpse.Systems
+namespace PlayerGrave.Systems
 {
     public class Commands : ModSystem
     {
