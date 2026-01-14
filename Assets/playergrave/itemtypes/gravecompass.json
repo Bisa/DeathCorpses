@@ -1,7 +1,7 @@
 {
   "enabled": true,
-  "code": "corpsecompass",
-  "class": "ItemCorpseCompass",
+  "code": "gravecompass",
+  "class": "ItemGraveCompass",
   "behaviors": [
     {
       "name": "GroundStorable",
@@ -19,11 +19,11 @@
       }
     }
   ],
-  "shape": { "base": "item/corpsecompass" },
+  "shape": { "base": "item/gravecompass" },
   "creativeinventory": {
     "general": [ "*" ],
     "tools": [ "*" ],
-    "playercorpse": [ "*" ]
+    "playergrave": [ "*" ]
   },
   "textures": {
     "compass": { "base": "item/compass" },

@@ -1,21 +1,21 @@
 [
   {
-    "file": "recipes/grid/corpsecompass.json",
+    "file": "recipes/grid/cogravecompass.json",
     "op": "replace",
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "playercorpse:CorpseCompassEnabled",
+      "when": "playergrave:GraveCompassEnabled",
       "isValue": "false"
     }
   },
   {
-    "file": "itemtypes/corpsecompass.json",
+    "file": "itemtypes/cgravecompass.json",
     "op": "replace",
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "playercorpse:CorpseCompassEnabled",
+      "when": "playergrave:GraveCompassEnabled",
       "isValue": "false"
     }
   }

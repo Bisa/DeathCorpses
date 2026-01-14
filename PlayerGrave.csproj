@@ -9,7 +9,7 @@
   <PropertyGroup>
     <WarningLevel>4</WarningLevel>
     <NoWarn>CS1591</NoWarn>
-    <OutputPath>C:\Users\rjackman\AppData\Roaming\VintagestoryData\Mods\PlayerCorpse\</OutputPath>
+    <OutputPath>C:\Users\rjackman\AppData\Roaming\VintagestoryData\Mods\PlayerGrave\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 

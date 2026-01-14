@@ -13,7 +13,7 @@ namespace PlayerGrave
         [Description("Has 100 hp, can be broken by another player")]
         public bool HasHealth { get; set; } = false;
 
-        public bool CreateCorpse { get; set; } = true;
+        public bool CreateGrave { get; set; } = true;
 
         public string[] SaveInventoryTypes { get; set; } =
         [
@@ -42,18 +42,18 @@ namespace PlayerGrave
 
         public bool PinWaypoint { get; set; } = true;
 
-        [Description("If true, the waypoint will be removed when the corpse is collected")]
+        [Description("If true, the waypoint will be removed when the grave is collected")]
         public bool RemoveWaypointOnCollect { get; set; } = true;
         public bool DebugMode { get; set; } = false;
 
-        [Description("Makes corpses available to everyone after N in-game hours (0 - always, below zero - never)")]
-        public int FreeCorpseAfterTime { get; set; } = 240;
+        [Description("Makes graves available to everyone after N in-game hours (0 - always, below zero - never)")]
+        public int FreeGraveAfterTime { get; set; } = 240;
 
-        [Description("Corpse collection time in seconds")]
-        public float CorpseCollectionTime { get; set; } = 1;
+        [Description("Grave collection time in seconds")]
+        public float GraveCollectionTime { get; set; } = 1;
 
         [Description("If you set it to false, all already existing compasses will turn into an unknown item")]
-        public bool CorpseCompassEnabled { get; set; } = true;
+        public bool GraveCompassEnabled { get; set; } = true;
 
         [Description("Override vanilla keep inventory system, so you can drop armor and cloth")]
         public DropArmorMode DropArmorOnDeath { get; set; } = DropArmorMode.Vanilla;

@@ -57,11 +57,11 @@ namespace PlayerGrave.Items
 
             if (handling == EnumHandHandling.NotHandled)
             {
-                long lastCorpseSearch = slot.Itemstack.TempAttributes.GetLong("lastCorpseSearch", 0);
-                if (lastCorpseSearch + SearchCooldown < api.World.ElapsedMilliseconds)
+                long lastGraveSearch = slot.Itemstack.TempAttributes.GetLong("lastGraveSearch", 0);
+                if (lastGraveSearch + SearchCooldown < api.World.ElapsedMilliseconds)
                 {
-                    UpdateNearestCorpse(byEntity, slot);
-                    slot.Itemstack.TempAttributes.SetLong("lastCorpseSearch", api.World.ElapsedMilliseconds);
+                    UpdateNearestGrave(byEntity, slot);
+                    slot.Itemstack.TempAttributes.SetLong("lastGraveSearch", api.World.ElapsedMilliseconds);
                     handling = EnumHandHandling.PreventDefault;
                 }
 
@@ -73,11 +73,11 @@ namespace PlayerGrave.Items
         {
             if (byEntity.LeftHandItemSlot == slot)
             {
-                long lastCorpseSearch = slot.Itemstack.TempAttributes.GetLong("lastCorpseSearch", 0);
-                if (lastCorpseSearch + OffHandSearchCooldown < api.World.ElapsedMilliseconds)
+                long lastGraveSearch = slot.Itemstack.TempAttributes.GetLong("lastGraveSearch", 0);
+                if (lastGraveSearch + OffHandSearchCooldown < api.World.ElapsedMilliseconds)
                 {
-                    UpdateNearestCorpse(byEntity, slot);
-                    slot.Itemstack.TempAttributes.SetLong("lastCorpseSearch", api.World.ElapsedMilliseconds);
+                    UpdateNearestGrave(byEntity, slot);
+                    slot.Itemstack.TempAttributes.SetLong("lastGraveSearch", api.World.ElapsedMilliseconds);
                 }
 
                 long lastEmit = slot.Itemstack.TempAttributes.GetLong("lastEmitParticlesOffHand", 0);
@@ -93,10 +93,10 @@ namespace PlayerGrave.Items
 
         private void EmitParticles(ItemSlot slot, EntityAgent byEntity)
         {
-            Vec3i nearestCorpsePos = slot.Itemstack.Attributes.GetVec3i("nearestCorpsePos");
-            if (api.Side == EnumAppSide.Client && nearestCorpsePos != null)
+            Vec3i nearestGravePos = slot.Itemstack.Attributes.GetVec3i("nearestGravePos");
+            if (api.Side == EnumAppSide.Client && nearestGravePos != null)
             {
-                var targetPos = nearestCorpsePos.ToVec3d().Add(.5, 0, .5);
+                var targetPos = nearestGravePos.ToVec3d().Add(.5, 0, .5);
                 var startPos = byEntity.SidedPos.AheadCopy(1).XYZ.Add(0, byEntity.LocalEyePos.Y, 0);
                 var relativePos = targetPos - startPos;
 
@@ -113,35 +113,35 @@ namespace PlayerGrave.Items
             }
         }
 
-        private void UpdateNearestCorpse(EntityAgent byEntity, ItemSlot slot)
+        private void UpdateNearestGrave(EntityAgent byEntity, ItemSlot slot)
         {
             if (api.Side == EnumAppSide.Server && byEntity is EntityPlayer playerEntity)
             {
                 double distance = double.MaxValue;
-                EntityPlayerGrave? nearestCorpse = null;
+                EntityPlayerGrave? nearestGrave = null;
 
                 string? ownerUID = playerEntity.PlayerUID;
                 if (playerEntity.Player.WorldData.CurrentGameMode == EnumGameMode.Creative)
                 {
-                    ownerUID = null; // show all corpses in creative
+                    ownerUID = null; // show all graves in creative
                 }
 
-                foreach (EntityPlayerGrave corpse in GetCorpsesAround(SearchRadius, byEntity.ServerPos.XYZInt, ownerUID))
+                foreach (EntityPlayerGrave grave in GetGravesAround(SearchRadius, byEntity.ServerPos.XYZInt, ownerUID))
                 {
-                    double currDistance = byEntity.Pos.SquareDistanceTo(corpse.Pos);
+                    double currDistance = byEntity.Pos.SquareDistanceTo(grave.Pos);
                     if (currDistance <= distance)
                     {
                         distance = currDistance;
-                        nearestCorpse = corpse;
+                        nearestGrave = grave;
                     }
                 }
 
-                if (nearestCorpse != null)
+                if (nearestGrave != null)
                 {
-                    slot.Itemstack.Attributes.SetVec3i("nearestCorpsePos", nearestCorpse.Pos.XYZInt);
+                    slot.Itemstack.Attributes.SetVec3i("nearestGravePos", nearestGrave.Pos.XYZInt);
                     slot.MarkDirty();
 
-                    string text = $"{nearestCorpse.OwnerName}'s corpse found at {nearestCorpse.SidedPos.XYZ}";
+                    string text = $"{nearestGrave.OwnerName}'s grave found at {nearestGrave.SidedPos.XYZ}";
                     ModLogger.Notification(text);
                     if (Core.Config.DebugMode)
                     {
@@ -150,17 +150,17 @@ namespace PlayerGrave.Items
                 }
                 else
                 {
-                    slot.Itemstack.Attributes.RemoveAttribute("nearestCorpsePosX");
-                    slot.Itemstack.Attributes.RemoveAttribute("nearestCorpsePosY");
-                    slot.Itemstack.Attributes.RemoveAttribute("nearestCorpsePosZ");
+                    slot.Itemstack.Attributes.RemoveAttribute("nearestGravePosX");
+                    slot.Itemstack.Attributes.RemoveAttribute("nearestGravePosY");
+                    slot.Itemstack.Attributes.RemoveAttribute("nearestGravePosZ");
                     slot.MarkDirty();
 
-                    byEntity.SendMessage(Lang.Get($"{Constants.ModId}:corpsecompass-corpses-not-found"));
+                    byEntity.SendMessage(Lang.Get($"{Constants.ModId}:gravecompass-graves-not-found"));
                 }
             }
         }
 
-        private IEnumerable<EntityPlayerGrave> GetCorpsesAround(int radius, Vec3i pos, string? playerUID = null)
+        private IEnumerable<EntityPlayerGrave> GetGravesAround(int radius, Vec3i pos, string? playerUID = null)
         {
             foreach (IServerChunk chunk in GetAllChunksAround(radius, pos))
             {
@@ -168,11 +168,11 @@ namespace PlayerGrave.Items
                 {
                     foreach (var entity in chunk.Entities)
                     {
-                        if (entity is EntityPlayerGrave corpseEntity)
+                        if (entity is EntityPlayerGrave graveEntity)
                         {
-                            if (playerUID == null || corpseEntity.OwnerUID == playerUID)
+                            if (playerUID == null || graveEntity.OwnerUID == playerUID)
                             {
-                                yield return corpseEntity;
+                                yield return graveEntity;
                             }
                         }
                     }

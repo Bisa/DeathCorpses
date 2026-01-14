@@ -65,7 +65,7 @@ namespace PlayerGrave.Entities
             get
             {
                 double hoursPassed = Api.World.Calendar.TotalHours - CreationTime;
-                int hoursForFree = Core.Config.FreeCorpseAfterTime;
+                int hoursForFree = Core.Config.FreeGraveAfterTime;
 
                 bool alwaysFree = hoursForFree == 0;
                 bool neverFree = hoursForFree < 0;
@@ -75,7 +75,7 @@ namespace PlayerGrave.Entities
             }
         }
 
-        public Guid CorpseId { get; set; } = Guid.NewGuid();
+        public Guid GraveId { get; set; } = Guid.NewGuid();
 
         public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
         {
@@ -134,8 +134,8 @@ namespace PlayerGrave.Entities
                 SecondsPassed += dt;
                 if (Api.Side == EnumAppSide.Client)
                 {
-                    _interactRingRenderer.CircleProgress = SecondsPassed / Core.Config.CorpseCollectionTime;
-                    if (SecondsPassed > Core.Config.CorpseCollectionTime)
+                    _interactRingRenderer.CircleProgress = SecondsPassed / Core.Config.GraveCollectionTime;
+                    if (SecondsPassed > Core.Config.GraveCollectionTime)
                     {
                         ForceUpdateSecondsPassedOnServer();
                     }
@@ -195,7 +195,7 @@ namespace PlayerGrave.Entities
                     {
                         if (byPlayer is IServerPlayer sp)
                         {
-                            sp.SendIngameError("", Lang.Get("game:ingameerror-not-corpse-owner"));
+                            sp.SendIngameError("", Lang.Get("game:ingameerror-not-grave-owner"));
                         }
                     }
                     else
@@ -209,13 +209,14 @@ namespace PlayerGrave.Entities
                                 ModLogger.Notification(msg);
                                 Die();
                             }
-                            else if (SecondsPassed > Core.Config.CorpseCollectionTime)
+                            else if (SecondsPassed > Core.Config.GraveCollectionTime)
                             {
-                                Collect(byPlayer);
                                 if (Core.Config.RemoveWaypointOnCollect)
                                 {
                                     DeathContentManager.RemoveDeathPoint(byPlayer.Entity, this);
                                 }
+                                Collect(byPlayer);
+                                
                             }
                         }
 
@@ -344,7 +345,7 @@ namespace PlayerGrave.Entities
 
         public override string GetName()
         {
-            return Lang.Get("{0}'s corpse", OwnerName);
+            return Lang.Get("{0}'s grave", OwnerName);
         }
 
         public override string GetInfoText()
@@ -352,11 +353,11 @@ namespace PlayerGrave.Entities
             var sb = new StringBuilder();
 
             sb.Append(base.GetInfoText());
-            sb.AppendLine(Lang.Get($"{Constants.ModId}:corpse-created(date={{0}})", CreationRealDatetime));
+            sb.AppendLine(Lang.Get($"{Constants.ModId}:grave-created(date={{0}})", CreationRealDatetime));
 
             if (IsFree)
             {
-                sb.AppendLine(Lang.Get($"{Constants.ModId}:corpse-free"));
+                sb.AppendLine(Lang.Get($"{Constants.ModId}:grave-free"));
             }
 
             return sb.ToString();

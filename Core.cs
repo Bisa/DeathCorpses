@@ -14,10 +14,10 @@ namespace PlayerGrave
             var configs = api.ModLoader.GetModSystem<ConfigManager>();
             Config = configs.GetConfig<Config>();
 
-            api.World.Config.SetBool($"{Mod.Info.ModID}:CorpseCompassEnabled", Config.CorpseCompassEnabled);
+            api.World.Config.SetBool($"{Mod.Info.ModID}:GraveCompassEnabled", Config.GraveCompassEnabled);
 
-            api.RegisterEntity("EntityPlayerCorpse", typeof(EntityPlayerGrave));
-            api.RegisterItemClass("ItemCorpseCompass", typeof(ItemGraveCompass));
+            api.RegisterEntity("EntityPlayerGrave", typeof(EntityPlayerGrave));
+            api.RegisterItemClass("ItemGraveCompass", typeof(ItemGraveCompass));
         }
 
         public override void AssetsLoaded(ICoreAPI api)
