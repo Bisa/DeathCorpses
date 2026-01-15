@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <!-- Data folder: contains Mods, Cache, etc. -->
+    <VintageStoryDataDir Condition="'$(VintageStoryDataDir)'=='' and Exists('$(APPDATA)\VintagestoryData')">$(APPDATA)\VintagestoryData</VintageStoryDataDir>
+
+    <!-- Install folder: contains VintagestoryAPI.dll / VintagestoryLib.dll -->
+    <VintageStoryInstallDir Condition="'$(VintageStoryInstallDir)'=='' and Exists('D:\Games\Vintagestory\VintagestoryAPI.dll')">D:\Games\Vintagestory</VintageStoryInstallDir>
+    <VintageStoryInstallDir Condition="'$(VintageStoryInstallDir)'=='' and Exists('$(APPDATA)\Vintagestory\VintagestoryAPI.dll')">$(APPDATA)\Vintagestory</VintageStoryInstallDir>
+  </PropertyGroup>
+
+  <Target Name="FailIfVintageStoryMissing" BeforeTargets="BeforeBuild"
+          Condition="'$(VintageStoryInstallDir)'=='' Or !Exists('$(VintageStoryInstallDir)')">
+    <Error Text="Vintage Story install folder not found. Set VintageStoryInstallDir in Directory.Build.props." />
+  </Target>
+
+  <Target Name="FailIfVintageStoryDataMissing" BeforeTargets="BeforeBuild"
+          Condition="'$(VintageStoryDataDir)'=='' Or !Exists('$(VintageStoryDataDir)')">
+    <Error Text="Vintage Story data folder not found. Set VintageStoryDataDir in Directory.Build.props." />
+  </Target>
+</Project>

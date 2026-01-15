@@ -42,6 +42,9 @@ namespace PlayerGrave
 
         public bool PinWaypoint { get; set; } = true;
 
+        [Description("If true, disables the vanilla 'You died here' death waypoint for the player")]
+        public bool DisableVanillaDeathWaypoint { get; set; } = true;
+
         [Description("If true, the waypoint will be removed when the grave is collected")]
         public bool RemoveWaypointOnCollect { get; set; } = true;
         public bool DebugMode { get; set; } = false;

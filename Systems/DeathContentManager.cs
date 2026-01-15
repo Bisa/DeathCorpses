@@ -31,6 +31,24 @@ namespace PlayerGrave.Systems
         {
             _sapi = api;
             api.Event.OnEntityDeath += OnEntityDeath;
+            api.Event.PlayerJoin += OnPlayerJoin;
+        }
+
+        private void OnPlayerJoin(IServerPlayer byPlayer)
+        {
+            
+            if (!Core.Config.DisableVanillaDeathWaypoint)
+                return;
+            var callArgs = new TextCommandCallingArgs();
+            callArgs.Caller = new Caller
+            {
+                Player = byPlayer,
+                Entity = byPlayer.Entity
+            };
+            callArgs.RawArgs = new CmdArgs("deathwp false");
+
+            _sapi.ChatCommands.Execute("waypoint", callArgs);
+
         }
 
         private void OnEntityDeath(Entity entity, DamageSource damageSource)
@@ -54,12 +72,15 @@ namespace PlayerGrave.Systems
             {
                 if (Core.Config.CreateWaypoint == Config.CreateWaypointMode.Always)
                 {
-                    CreateDeathPoint(byPlayer.Entity, graveEntity);
+                    if (byPlayer.Entity is EntityPlayer ep)
+                    {
+                        CreateDeathPoint(byPlayer.Entity, graveEntity);
+                    }
                 }
 
                 // Save content for /returnthings
                 if (Core.Config.MaxDeathContentSavedPerPlayer > 0)
-                {
+                {                    
                     SaveDeathContent(graveEntity.Inventory, byPlayer);
                 }
 
@@ -269,7 +290,21 @@ namespace PlayerGrave.Systems
             // Quote the title so spaces are safe
             string title = Lang.Get($"{Constants.ModId}:death-waypoint-name", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             //sapi.Logger.Notification($"[PlayerGrave] Waypoint coords: {x}, {y}, {z}");
-            sapi.HandleCommand(sp, $"/waypoint addati {icon} {x} {y} {z} {pinned} {color} \"{title}\"");
+            //sapi.HandleCommand(sp, $"/waypoint addati {icon} {x} {y} {z} {pinned} {color} \"{title}\"");
+            var callArgs = new TextCommandCallingArgs();
+            callArgs.Caller = new Caller
+            {
+                Player = sp,
+                Entity = byPlayer
+            };
+            callArgs.RawArgs = new CmdArgs($"addati {icon} {x} {y} {z} {pinned} {color} \"{title}\"");
+            sapi.ChatCommands.Execute("waypoint", callArgs, (result) =>
+            {
+                sapi.Logger.Notification($"Waypoint cmd: {result.Status} - {result.StatusMessage}");
+                if (result.Status != EnumCommandStatus.Success) return;
+                var m = Regex.Match(result.StatusMessage, @"nr\.\s*(\d+)");
+                if (m.Success) graveEntity.WaypointID = int.Parse(m.Groups[1].Value);
+            });
         }
 
         //private static WaypointMapLayer? GetMapLayer(ICoreAPI api)
@@ -302,7 +337,28 @@ namespace PlayerGrave.Systems
 
         public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave graveEntity)
         {
-            // TODO (VS 1.21): implement waypoint removal without WaypointMapLayer internals
+            if (graveEntity.WaypointID < 0) return;
+            if (byPlayer?.Api is not ICoreServerAPI sapi) return;
+
+            var sp = byPlayer.Player as IServerPlayer;
+            if (sp == null) return;
+
+            var callArgs = new TextCommandCallingArgs
+            {
+                Caller = new Caller
+                {
+                    Player = sp,
+                    Entity = byPlayer
+                },
+                RawArgs = new CmdArgs($"remove {graveEntity.WaypointID}")
+            };
+
+            sapi.ChatCommands.Execute("waypoint", callArgs, (result) =>
+            {
+                sapi.Logger.Notification(
+                    $"Waypoint remove: {result.Status} - {result.StatusMessage}"
+                );
+            });
         }
 
         public string GetDeathDataPath(IPlayer player)

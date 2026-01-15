@@ -9,7 +9,7 @@
   <PropertyGroup>
     <WarningLevel>4</WarningLevel>
     <NoWarn>CS1591</NoWarn>
-    <OutputPath>C:\Users\rjackman\AppData\Roaming\VintagestoryData\Mods\PlayerGrave\</OutputPath>
+    <OutputPath>bin\PlayerGrave\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
@@ -19,19 +19,21 @@
 
   <ItemGroup>
     <Reference Include="CommonLib">
-      <HintPath>C:\Users\rjackman\AppData\Roaming\VintagestoryData\CommonLib\CommonLib.dll</HintPath>
+      <HintPath>$(VintageStoryDataDir)\CommonLib\CommonLib.dll</HintPath>
       <Private>false</Private>
     </Reference>
+
     <Reference Include="VintagestoryAPI">
-      <HintPath>D:\Games\Vintagestory\VintagestoryAPI.dll</HintPath>
+      <HintPath>$(VintageStoryInstallDir)\VintagestoryAPI.dll</HintPath>
       <Private>false</Private>
     </Reference>
 
     <Reference Include="VintagestoryLib">
-      <HintPath>D:\Games\Vintagestory\VintagestoryLib.dll</HintPath>
+      <HintPath>$(VintageStoryInstallDir)\VintagestoryLib.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
 
   <ItemGroup>
     <Content Include="assets\**\*">
@@ -44,4 +46,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="echo VintageStoryInstallDir=$(VintageStoryInstallDir)&#xD;&#xA;echo VintageStoryDataDir=$(VintageStoryDataDir)" />
+  </Target>
 </Project>
