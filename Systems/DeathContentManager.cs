@@ -270,16 +270,14 @@ namespace DeathCorpses.Systems
             var sp = byPlayer.Player as IServerPlayer;
             if (sp == null) return;
 
-            int absX = (int)byPlayer.ServerPos.X;
-            int absY = (int)byPlayer.ServerPos.Y;
-            int absZ = (int)byPlayer.ServerPos.Z;
+            int absX = (int)graveEntity.ServerPos.X;
+            int absY = (int)graveEntity.ServerPos.Y;
+            int absZ = (int)graveEntity.ServerPos.Z;
 
-            int halfX = sapi.World.BlockAccessor.MapSizeX / 2;
-            int halfZ = sapi.World.BlockAccessor.MapSizeZ / 2;
-
-            int x = absX - halfX;
+            var spawn = sapi.World.DefaultSpawnPosition;
+            int x = absX - (int)spawn.X;
             int y = absY;
-            int z = absZ - halfZ;
+            int z = absZ - (int)spawn.Z;
 
             sapi.Logger.Notification($"[{Constants.ModId}] Waypoint coords (abs): {absX},{absY},{absZ}  (rel): {x},{y},{z}");
 
