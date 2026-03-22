@@ -12,3 +12,6 @@ obj
 
 # Other
 /[Ii]gnore
+
+# nix
+/result

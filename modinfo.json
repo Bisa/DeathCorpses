@@ -6,9 +6,9 @@
   "version": "1.0.0",
   "website": "https://github.com/Marzz2006/PlayerGrave",
   "authors": [ "DArkHekRoMaNT", "Marzz2006" ],
-  "description": "Fork of Player Grave by DArkHekRoMaNT, updated for Vintage Story 1.21. Adds persistent grave waypoints, optional removal on collect, and the ability to disable the vanilla 'You died here' waypoint. Server-safe and persistent across restarts.",
+  "description": "Fork of Player Grave by DArkHekRoMaNT, updated for Vintage Story 1.22. Adds persistent grave waypoints, optional removal on collect, and the ability to disable the vanilla 'You died here' waypoint. Server-safe and persistent across restarts.",
   "dependencies": {
-    "game": "1.21.0",
+    "game": "1.22.0-rc.4",
     "commonlib": "2.8.0"
   }
 }
