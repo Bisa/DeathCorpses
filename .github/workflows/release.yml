@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Read mod info
+        id: modinfo
+        run: |
+          MODID=$(jq -r .modid modinfo.json)
+          VERSION=$(jq -r .version modinfo.json)
+          TAG=${{ github.ref_name }}
+
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "ERROR: modinfo.json version ($VERSION) does not match tag ($TAG)"
+            echo "Bump the version in modinfo.json and commit it before tagging."
+            exit 1
+          fi
+
+          echo "modid=$MODID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build mod zip
+        run: |
+          nix build .#zip
+          cp result ${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ steps.modinfo.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip
+          generate_release_notes: true
+
+      - name: Summary
+        run: |
+          MODID=${{ steps.modinfo.outputs.modid }}
+          VERSION=${{ steps.modinfo.outputs.version }}
+          ZIP="${MODID}-${VERSION}.zip"
+          REPO=${{ github.repository }}
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ZIP}"
+
+          echo "## Publish to mod portal" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The mod DB upload API is not yet implemented. Upload manually:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download: [\`${ZIP}\`](${DOWNLOAD_URL})" >> $GITHUB_STEP_SUMMARY
+          echo "2. Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY

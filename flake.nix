@@ -12,10 +12,16 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         modInfo = builtins.fromJSON (builtins.readFile ./modinfo.json);
-        modVersion = modInfo.version;
         modId = modInfo.modid;
+        modBaseVersion = modInfo.version;
         vsVersion = modInfo.dependencies.game;
         vsChannel = "unstable";
+
+        # For local dirty builds, append git short hash to distinguish from a clean release.
+        # CI always builds from a clean tagged commit, so modBaseVersion is used as-is.
+        modVersion =
+          if self ? dirtyShortRev then "${modBaseVersion}+${self.dirtyShortRev}"
+          else modBaseVersion;
 
         vintageStoryServer = pkgs.fetchurl {
           url = "https://cdn.vintagestory.at/gamefiles/${vsChannel}/vs_server_linux-x64_${vsVersion}.tar.gz";
@@ -47,7 +53,7 @@
       {
         packages.default = pkgs.buildDotnetModule {
           pname = modId;
-          version = modVersion;
+          version = modVersion;  # used for nix store path only; modinfo.json is patched in preBuild
           src = ./.;
 
           projectFile = "${modId}.csproj";
@@ -61,6 +67,8 @@
           preBuild = ''
             export VintageStoryInstallDir="${vsLibs}"
             export VintageStoryDataDir="${commonLibDir}"
+            substituteInPlace modinfo.json \
+              --replace '"version": "${modBaseVersion}"' '"version": "${modVersion}"'
           '';
 
           installPhase = ''
@@ -74,7 +82,7 @@
 
           meta = {
             description = "Vintage Story mod: persistent grave with waypoints";
-            homepage = "https://mods.vintagestory.at/show/mod/39449";
+            homepage = "https://mods.vintagestory.at/deathcorpses";
             license = pkgs.lib.licenses.mit;
           };
         };
@@ -84,7 +92,7 @@
           let mod = self.packages.${system}.default; in
           pkgs.runCommand "${modId}-${modVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
             cd ${mod}
-            zip -r $out .
+            find . | sort | zip -X -@ $out
           '';
 
         # Expose fetch-deps so you can populate deps.nix without knowing the attribute path.

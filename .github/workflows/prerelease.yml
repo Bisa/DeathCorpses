@@ -1,0 +1,51 @@
+name: Prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or commit to build from'
+        default: 'main'
+        required: false
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Read mod info
+        id: modinfo
+        run: |
+          MODID=$(jq -r .modid modinfo.json)
+          BASE_VERSION=$(jq -r .version modinfo.json)
+          HASH=$(git rev-parse --short HEAD)
+          VERSION="${BASE_VERSION}-rc.${HASH}"
+
+          echo "modid=$MODID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build mod zip
+        run: |
+          nix build .#zip
+          cp result ${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip
+
+      - name: Create prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.modinfo.outputs.version }}" \
+            --draft \
+            --prerelease \
+            --title "${{ steps.modinfo.outputs.version }}" \
+            --generate-notes \
+            "${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip"
+          gh release edit "${{ steps.modinfo.outputs.version }}" --draft=false
