@@ -3,7 +3,7 @@
   "side": "universal",
   "name": "Death Corpses",
   "modid": "deathcorpses",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "website": "https://github.com/Bisa/DeathCorpses",
   "authors": [ "DArkHekRoMaNT", "Marzz2006", "Bisa" ],
   "description": "If you die with items in your inventory this mod creates a corpse where you died containing all of those items (so you can collect them later). It will also add persistent corpse waypoints (which are optionally removed on collecting corpses) and the ability to disable the vanilla 'You died here' (tomb stone) waypoint.",
