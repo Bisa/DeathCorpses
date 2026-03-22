@@ -1,0 +1,11 @@
+{
+    "item-creature-deathcorpses": "Mŕtvola hráča",
+    "blockhelp-collect": "Pozbieraj",
+    "game:ingameerror-not-grave-owner": "Toto nie je tvoja mŕtvola!",
+    "grave-free": "Pre všetkých",
+    "grave-created(date={0})": "Vytvoril {0}",
+    "item-gravecompass": "Kompas k mŕtvole",
+    "deathcorpses:item-handbooktitle-deathcorpses:gravecompass": "Použitie",
+    "deathcorpses:item-handbooktext-deathcorpses:gravecompass": "Pomôže nájisť mŕtvoly. Administrátor servera uvidí v server-main.txt presné pozície všetkých mŕtvol (použitie s prikrčením)<br/><br/><b>Funkguje len pre aktuálny stĺpec chunkov, predvolene je to 32x256x32 blokov</b>",
+    "gravecompass-graves-not-found": "V rámci tohto stĺpca chunkov sa nenachádza žiadna mŕtvola"
+}

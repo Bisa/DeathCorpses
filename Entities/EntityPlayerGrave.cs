@@ -1,6 +1,6 @@
 using CommonLib.UI;
 using CommonLib.Utils;
-using PlayerGrave.Systems;
+using DeathCorpses.Systems;
 using System;
 using System.IO;
 using System.Text;
@@ -11,7 +11,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace PlayerGrave.Entities
+namespace DeathCorpses.Entities
 {
     public class EntityPlayerGrave : EntityAgent
     {

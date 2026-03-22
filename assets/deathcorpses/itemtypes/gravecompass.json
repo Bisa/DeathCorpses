@@ -23,7 +23,7 @@
   "creativeinventory": {
     "general": [ "*" ],
     "tools": [ "*" ],
-    "playergrave": [ "*" ]
+    "deathcorpses": [ "*" ]
   },
   "textures": {
     "compass": { "base": "item/compass" },

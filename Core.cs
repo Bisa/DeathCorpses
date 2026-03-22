@@ -1,9 +1,9 @@
 using CommonLib.Config;
-using PlayerGrave.Entities;
-using PlayerGrave.Items;
+using DeathCorpses.Entities;
+using DeathCorpses.Items;
 using Vintagestory.API.Common;
 
-namespace PlayerGrave
+namespace DeathCorpses
 {
     public class Core : ModSystem
     {

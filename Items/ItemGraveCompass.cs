@@ -1,6 +1,6 @@
 using CommonLib.Extensions;
 using CommonLib.Utils;
-using PlayerGrave.Entities;
+using DeathCorpses.Entities;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -9,7 +9,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace PlayerGrave.Items
+namespace DeathCorpses.Items
 {
     public class ItemGraveCompass : Item
     {

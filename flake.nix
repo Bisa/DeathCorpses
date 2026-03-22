@@ -1,5 +1,5 @@
 {
-  description = "PlayerGrave - Vintage Story mod";
+  description = "DeathCorpses - Vintage Story mod";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

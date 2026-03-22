@@ -1,12 +1,12 @@
 {
-    "item-creature-playergrave": "玩家尸体",
+    "item-creature-deathcorpses": "玩家尸体",
     "blockhelp-collect": "取回",
     "game:ingameerror-not-grave-owner": "这不是你的尸体！",
     "grave-free": "对所有人开放",
     "grave-created(date={0})": "已创建 {0}",
     "item-gravecompass": "尸体指针",
-    "playergrave:item-handbooktitle-playergrave:gravecompass": "用途",
-    "playergrave:item-handbooktext-playergrave:gravecompass": "有助于找到你的尸体.服务器管理员还可以检查服务器主 txt 日志,查看所有尸体的确切坐标(在创造模式中使用)<br/><br/><b>以玩家周围 7x7 块为单位进行搜索(默认为 224x256x224 块)</b>",
+    "deathcorpses:item-handbooktitle-deathcorpses:gravecompass": "用途",
+    "deathcorpses:item-handbooktext-deathcorpses:gravecompass": "有助于找到你的尸体.服务器管理员还可以检查服务器主 txt 日志,查看所有尸体的确切坐标(在创造模式中使用)<br/><br/><b>以玩家周围 7x7 块为单位进行搜索(默认为 224x256x224 块)</b>",
     "gravecompass-graves-not-found": "周围没有发现尸体",
     "gravecompass-target-set": "目标设定为最后一具尸体",
     "gravecompass-no-last-grave": "未找到最后一具尸体"

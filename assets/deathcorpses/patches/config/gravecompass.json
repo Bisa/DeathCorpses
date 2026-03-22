@@ -5,7 +5,7 @@
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "playergrave:GraveCompassEnabled",
+      "when": "deathcorpses:GraveCompassEnabled",
       "isValue": "false"
     }
   },
@@ -15,7 +15,7 @@
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "playergrave:GraveCompassEnabled",
+      "when": "deathcorpses:GraveCompassEnabled",
       "isValue": "false"
     }
   }

@@ -1,7 +1,7 @@
-namespace PlayerGrave
+namespace DeathCorpses
 {
     public static class Constants
     {
-        public static string ModId => "playergrave";
+        public static string ModId => "deathcorpses";
     }
 }

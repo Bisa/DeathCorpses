@@ -1,7 +1,7 @@
 using CommonLib.Extensions;
 using CommonLib.Utils;
 using HarmonyLib;
-using PlayerGrave.Entities;
+using DeathCorpses.Entities;
 using System;
 using System.Drawing;
 using System.IO;
@@ -16,7 +16,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 
-namespace PlayerGrave.Systems
+namespace DeathCorpses.Systems
 {
     public class DeathContentManager : ModSystem
     {
@@ -121,7 +121,7 @@ namespace PlayerGrave.Systems
 
         private EntityPlayerGrave CreateGraveEntity(IServerPlayer byPlayer)
         {
-            var entityType = _sapi.World.GetEntityType(new AssetLocation(Constants.ModId, "playergrave"));
+            var entityType = _sapi.World.GetEntityType(new AssetLocation(Constants.ModId, "deathcorpses"));
 
             if (_sapi.World.ClassRegistry.CreateEntity(entityType) is not EntityPlayerGrave grave)
             {
@@ -167,7 +167,7 @@ namespace PlayerGrave.Systems
 
         private InventoryGeneric TakeContentFromPlayer(IServerPlayer byPlayer)
         {
-            var inv = new InventoryGeneric(GetMaxGraveSlots(byPlayer), $"playergrave-{byPlayer.PlayerUID}", _sapi);
+            var inv = new InventoryGeneric(GetMaxGraveSlots(byPlayer), $"deathcorpses-{byPlayer.PlayerUID}", _sapi);
 
             int lastSlotId = 0;
             foreach (var invClassName in Core.Config.SaveInventoryTypes)
@@ -407,7 +407,7 @@ namespace PlayerGrave.Systems
             var tree = new TreeAttribute();
             tree.FromBytes(File.ReadAllBytes(file));
 
-            var inv = new InventoryGeneric(tree.GetInt("qslots"), $"playergrave-{player.PlayerUID}", player.Entity.Api);
+            var inv = new InventoryGeneric(tree.GetInt("qslots"), $"deathcorpses-{player.PlayerUID}", player.Entity.Api);
             inv.FromTreeAttributes(tree);
             return inv;
         }

@@ -2,9 +2,9 @@ using CommonLib.Config;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 
-namespace PlayerGrave
+namespace DeathCorpses
 {
-    [Config("playergrave.json")]
+    [Config("deathcorpses.json")]
     public class Config
     {
         [Description("Burns in 15 seconds. LET EVERYTHING BURN IN LAVA!")]
