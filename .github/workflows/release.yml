@@ -19,8 +19,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Read mod info
-        id: modinfo
+      - name: Read mod and target info
+        id: info
         run: |
           MODID=$(jq -r .modid modinfo.json)
           VERSION=$(jq -r .version modinfo.json)
@@ -32,33 +32,52 @@ jobs:
             exit 1
           fi
 
+          VS_NET10=$(jq -r .net10.gameVersion targets.json)
+          VS_NET8=$(jq -r .net8.gameVersion targets.json)
+
           echo "modid=$MODID" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "vs_net10=$VS_NET10" >> $GITHUB_OUTPUT
+          echo "vs_net8=$VS_NET8" >> $GITHUB_OUTPUT
 
-      - name: Build mod zip
+      - name: Build mod zips
         run: |
-          nix build .#zip
-          cp result ${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip
+          MODID=${{ steps.info.outputs.modid }}
+          VERSION=${{ steps.info.outputs.version }}
+          VS_NET10=${{ steps.info.outputs.vs_net10 }}
+          VS_NET8=${{ steps.info.outputs.vs_net8 }}
+
+          nix build .#zip-net10
+          cp result "${MODID}-vs${VS_NET10}_${VERSION}.zip"
+
+          nix build .#zip-net8
+          cp result "${MODID}-vs${VS_NET8}_${VERSION}.zip"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: "${{ steps.modinfo.outputs.version }}"
+          name: "${{ steps.info.outputs.version }}"
           tag_name: ${{ github.ref_name }}
-          files: ${{ steps.modinfo.outputs.modid }}-${{ steps.modinfo.outputs.version }}.zip
+          files: |
+            ${{ steps.info.outputs.modid }}-vs${{ steps.info.outputs.vs_net10 }}_${{ steps.info.outputs.version }}.zip
+            ${{ steps.info.outputs.modid }}-vs${{ steps.info.outputs.vs_net8 }}_${{ steps.info.outputs.version }}.zip
           generate_release_notes: true
 
       - name: Summary
         run: |
-          MODID=${{ steps.modinfo.outputs.modid }}
-          VERSION=${{ steps.modinfo.outputs.version }}
-          ZIP="${MODID}-${VERSION}.zip"
+          MODID=${{ steps.info.outputs.modid }}
+          VERSION=${{ steps.info.outputs.version }}
+          VS_NET10=${{ steps.info.outputs.vs_net10 }}
+          VS_NET8=${{ steps.info.outputs.vs_net8 }}
           REPO=${{ github.repository }}
-          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ZIP}"
 
           echo "## Publish to mod portal" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The mod DB upload API is not yet implemented. Upload manually:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Download: [\`${ZIP}\`](${DOWNLOAD_URL})" >> $GITHUB_STEP_SUMMARY
-          echo "2. Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY
+          echo "| VS Version | Download |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ${VS_NET10}+ | [\`${MODID}-vs${VS_NET10}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}-vs${VS_NET10}_${VERSION}.zip) |" >> $GITHUB_STEP_SUMMARY
+          echo "| ${VS_NET8}+ | [\`${MODID}-vs${VS_NET8}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}-vs${VS_NET8}_${VERSION}.zip) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY

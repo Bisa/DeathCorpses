@@ -16,7 +16,7 @@ Forked from the adapted [PlayerGrave](https://mods.vintagestory.at/show/mod/3944
 
 ## Requirements
 
-- Vintage Story `>= 1.22.0`
+- Vintage Story `>= 1.22.0` or `>= 1.21.6` ()
 
 ---
 
@@ -79,20 +79,35 @@ This repo uses [Nix flakes](https://nixos.wiki/wiki/Flakes) for fully reproducib
 
 - Nix with flakes enabled. If you don't have it: [install Nix](https://nixos.org/download) then add `experimental-features = nix-command flakes` to `~/.config/nix/nix.conf`.
 
+### Build targets
+
+The mod is built for multiple Vintage Story versions, defined in `targets.json`:
+
+| Target | VS Version | .NET |
+|--------|------------|------|
+| `net10` (default) | 1.22.0+ | .NET 10 |
+| `net8` | 1.21.6+ | .NET 8 |
+
 ### Build the mod zip
 
 ```sh
+# Default (net10) build
 nix build .#zip
+
+# Explicit targets
+nix build .#zip-net10
+nix build .#zip-net8
 ```
 
 The resulting zip is at `./result` and is ready to drop into your `Mods/` folder or upload to the mod portal.
 
 ### Updating the (NuGet) Nix package lockfile
 
-`deps.json` pins the NuGet packages fetched during the build. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, you need to regenerate deps.json as such:
+`deps/` contains per-target NuGet lockfiles. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, regenerate them:
 
 ```sh
-nix build .#fetch-deps && ./result ./deps.json
+nix build .#fetch-deps      && ./result ./deps/net10.0.json
+nix build .#fetch-deps-net8 && ./result ./deps/net8.0.json
 ```
 
 ---
@@ -108,7 +123,7 @@ To verify that a release artifact matches the source:
 Find the zip attached to a release on the [releases page](https://github.com/Bisa/DeathCorpses/releases) and note its SHA-256 hash:
 
 ```sh
-sha256sum deathcorpses-<version>.zip
+sha256sum deathcorpses-vs<vintagestory version>_<version>.zip
 ```
 
 **2. Checkout the corresponding tag and build it yourself**
@@ -117,7 +132,7 @@ sha256sum deathcorpses-<version>.zip
 git clone https://github.com/Bisa/DeathCorpses
 cd DeathCorpses
 git checkout <version>
-nix build .#zip
+nix build .#zip-net10  # or .#zip-net8
 sha256sum ./result
 ```
 
@@ -148,7 +163,7 @@ Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234
 3. Tag: `git tag 1.0.1`
 4. Push: `git push origin main 1.0.1`
 
-CI will build the zip and publish a GitHub release automatically. The build will fail if the tag does not match the version in `modinfo.json`.
+CI will build both zips (net10 and net8) and publish a GitHub release automatically. The build will fail if the tag does not match the version in `modinfo.json`.
 
 ### Release candidates
 
