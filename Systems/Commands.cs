@@ -35,6 +35,12 @@ namespace DeathCorpses.Systems
                         parsers.Player("give to player", api),
                         parsers.OptionalInt("id", 0))
                     .HandleWith(ReturnThings)
+                .EndSubCommand()
+                .BeginSubCommand("remove")
+                    .WithArgs(
+                        parsers.Player("player", api),
+                        parsers.OptionalInt("id", -1))
+                    .HandleWith(RemoveDeathContent)
                 .EndSubCommand();
         }
 
@@ -54,6 +60,41 @@ namespace DeathCorpses.Systems
                 sb.AppendLine($"{i}. {Path.GetFileName(files[i])}");
             }
             return TextCommandResult.Success(sb.ToString());
+        }
+
+        private TextCommandResult RemoveDeathContent(TextCommandCallingArgs args)
+        {
+            IPlayer player = (IPlayer)args[0];
+            int id = (int)args[1];
+            string[] files = _deathContentManager.GetDeathDataFiles(player);
+
+            if (files.Length == 0)
+            {
+                return TextCommandResult.Error(Lang.Get("No data saved"));
+            }
+
+            if (id >= 0)
+            {
+                if (id >= files.Length)
+                {
+                    return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
+                }
+
+                File.Delete(files[id]);
+                return TextCommandResult.Success(Lang.Get(
+                    "Removed death content {0} for {1}",
+                    id, player.PlayerName));
+            }
+
+            int count = files.Length;
+            foreach (string file in files)
+            {
+                File.Delete(file);
+            }
+
+            return TextCommandResult.Success(Lang.Get(
+                "Removed all {0} death content(s) for {1}",
+                count, player.PlayerName));
         }
 
         private TextCommandResult ReturnThings(TextCommandCallingArgs args)

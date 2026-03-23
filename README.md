@@ -40,6 +40,7 @@ All commands require the privilege configured in `NeedPrivilegeForReturnThings` 
 |---|---|
 | `/returnthings list <player>` | Lists all saved death inventories for a player, numbered by date |
 | `/returnthings get <player> <give to player> [id]` | Restores a saved death inventory to a player. `id` is the index from `list` (default: `0`, most recent) |
+| `/returnthings remove <player> [id]` | Deletes saved death inventories for a player. If `id` is given, only that entry is removed; otherwise all are deleted |
 
 ### Configuration
 
