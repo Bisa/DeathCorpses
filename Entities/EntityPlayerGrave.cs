@@ -1,5 +1,5 @@
-using CommonLib.UI;
-using CommonLib.Utils;
+using DeathCorpses.Lib.UI;
+using DeathCorpses.Lib.Utils;
 using DeathCorpses.Systems;
 using System;
 using System.IO;

@@ -1,4 +1,4 @@
-using CommonLib.Extensions;
+using DeathCorpses.Lib.Extensions;
 using System;
 using System.IO;
 using System.Linq;

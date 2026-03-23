@@ -11,7 +11,6 @@ A [Vintage Story](https://www.vintagestory.at/) mod that spawns a persistent cor
 ## Requirements
 
 - Vintage Story `>= 1.22.0`
-- [CommonLib](https://mods.vintagestory.at/commonlib) `>= 2.8.0`
 
 ---
 

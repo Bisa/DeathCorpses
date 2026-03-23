@@ -1,5 +1,5 @@
-using CommonLib.Extensions;
-using CommonLib.Utils;
+using DeathCorpses.Lib.Extensions;
+using DeathCorpses.Lib.Utils;
 using DeathCorpses.Entities;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-using CommonLib.Config;
+using DeathCorpses.Lib.Config;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 

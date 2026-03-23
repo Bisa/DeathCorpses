@@ -1,4 +1,4 @@
-using CommonLib.Config;
+using DeathCorpses.Lib.Config;
 using DeathCorpses.Entities;
 using DeathCorpses.Items;
 using Vintagestory.API.Common;

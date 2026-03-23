@@ -20,8 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CommonLib">
-      <HintPath>$(VintageStoryDataDir)\CommonLib\CommonLib.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(VintageStoryInstallDir)\Lib\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="protobuf-net">
+      <HintPath>$(VintageStoryInstallDir)\Lib\protobuf-net.dll</HintPath>
       <Private>false</Private>
     </Reference>
 
@@ -53,6 +58,6 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo VintageStoryInstallDir=$(VintageStoryInstallDir)&#xD;&#xA;echo VintageStoryDataDir=$(VintageStoryDataDir)" />
+    <Exec Command="echo VintageStoryInstallDir=$(VintageStoryInstallDir)" />
   </Target>
 </Project>

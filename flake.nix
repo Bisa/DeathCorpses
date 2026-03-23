@@ -29,24 +29,13 @@
         };
 
         vsLibs = pkgs.runCommand "vintage-story-libs-${vsVersion}" { } ''
-          mkdir -p $out
+          mkdir -p $out/Lib
           cd $out
           tar -xzf ${vintageStoryServer} --wildcards \
             'VintagestoryAPI.dll' \
-            'VintagestoryLib.dll'
-        '';
-
-        commonLibZip = pkgs.fetchurl {
-          url = "https://mods.vintagestory.at/download/55023/CommonLib_VS1.21.1_net8_v2.8.0.zip";
-          hash = "sha256-K5LHIQom4c7TFjylxLLFv32hucyoDMwbEJBJp9fr1Kw=";
-        };
-
-        # The csproj references $(VintageStoryDataDir)/CommonLib/CommonLib.dll
-        commonLibDir = pkgs.runCommand "commonlib-2.8.0" {
-          buildInputs = [ pkgs.unzip ];
-        } ''
-          mkdir -p $out/CommonLib
-          unzip ${commonLibZip} CommonLib.dll -d $out/CommonLib
+            'VintagestoryLib.dll' \
+            'Lib/Newtonsoft.Json.dll' \
+            'Lib/protobuf-net.dll'
         '';
 
       in
@@ -66,7 +55,6 @@
           # in ${modId}.csproj and the Exists() guards in Directory.Build.props.
           preBuild = ''
             export VintageStoryInstallDir="${vsLibs}"
-            export VintageStoryDataDir="${commonLibDir}"
             substituteInPlace modinfo.json \
               --replace '"version": "${modBaseVersion}"' '"version": "${modVersion}"'
           '';
