@@ -1,21 +1,21 @@
 [
   {
-    "file": "recipes/grid/cogravecompass.json",
+    "file": "recipes/grid/corpsecompass.json",
     "op": "replace",
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "deathcorpses:GraveCompassEnabled",
+      "when": "deathcorpses:CorpseCompassEnabled",
       "isValue": "false"
     }
   },
   {
-    "file": "itemtypes/cgravecompass.json",
+    "file": "itemtypes/corpsecompass.json",
     "op": "replace",
     "path": "/enabled",
     "value": "false",
     "condition": {
-      "when": "deathcorpses:GraveCompassEnabled",
+      "when": "deathcorpses:CorpseCompassEnabled",
       "isValue": "false"
     }
   }

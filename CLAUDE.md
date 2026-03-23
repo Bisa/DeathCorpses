@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DeathCorpses is a **Vintage Story** game mod (C# / .NET 10.0) that creates grave entities when players die, preserving their inventory and adding map waypoints. It is a fork of the PlayerGrave mod.
+DeathCorpses is a **Vintage Story** game mod (C# / .NET 10.0) that creates corpse entities when players die, preserving their inventory and adding map waypoints. It is a fork of the PlayerGrave mod.
 
 The mod version is sourced from `modinfo.json` and injected at build time.
 
@@ -26,21 +26,21 @@ There is no test suite. To run the mod, copy `./result` to the Vintage Story `Mo
 
 ### Entry Point
 
-`Core.cs` — `ModSystem` subclass that loads config, registers the `EntityPlayerGrave` entity and `ItemGraveCompass` item.
+`Core.cs` — `ModSystem` subclass that loads config, registers the `EntityPlayerCorpse` entity and `ItemCorpseCompass` item.
 
 ### Key Systems
 
-- **`Systems/DeathContentManager.cs`** — Server-side `ModSystem` that intercepts `OnEntityDeath()` to spawn a grave entity, create a map waypoint, and save the death inventory for later recovery. Also suppresses vanilla death waypoints on player join if configured.
-- **`Systems/Commands.cs`** — Registers the `/returnthings list|get|remove` admin commands for recovering or deleting saved death inventories.
+- **`Systems/DeathContentManager.cs`** — Server-side `ModSystem` that intercepts `OnEntityDeath()` to spawn a corpse entity, create a map waypoint, and save the death inventory for later recovery. Also suppresses vanilla death waypoints on player join if configured.
+- **`Systems/Commands.cs`** — Registers the `/dc` root command. Subcommand `corpse` (`list|get|remove`) manages saved corpses.
 
 ### Key Entities & Items
 
-- **`Entities/EntityPlayerGrave.cs`** — Custom `EntityAgent` that holds the dead player's inventory. Tracks owner UID, creation time, and associated waypoint ID. Handles timed-interaction collection and "free grave" logic (available to anyone after a configurable duration).
-- **`Items/ItemGraveCompass.cs`** — Held item that scans a 3-block radius for nearby `EntityPlayerGrave` entities and renders visual HUD indicators via `Lib/UI/HudCircleRenderer.cs`.
+- **`Entities/EntityPlayerCorpse.cs`** — Custom `EntityAgent` that holds the dead player's inventory. Tracks owner UID, creation time, and associated waypoint ID. Handles timed-interaction collection and "free corpse" logic (available to anyone after a configurable duration).
+- **`Items/ItemCorpseCompass.cs`** — Held item that scans a 3-block radius for nearby `EntityPlayerCorpse` entities and renders visual HUD indicators via `Lib/UI/HudCircleRenderer.cs`.
 
 ### Configuration
 
-- **`Config.cs`** — Defines all server-side settings (grave fire/health, waypoint icon/color/pinning, armor drop behavior, debug mode). Serialized to `ModConfig/deathcorpses.json` in the world save.
+- **`Config.cs`** — Defines all server-side settings (corpse fire/health, waypoint icon/color/pinning, armor drop behavior, debug mode). Serialized to `ModConfig/deathcorpses.json` in the world save.
 - **`Lib/Config/`** — Generic attribute-driven config manager used to load/save/validate the config.
 
 ### Lib Utilities

@@ -1,6 +1,6 @@
 {
   "code": "deathcorpses",
-  "class": "EntityPlayerGrave",
+  "class": "EntityPlayerCorpse",
   "habitat": "land",
   "hitboxSize": { "x": 0.9, "y": 0.3 },
   "client": {

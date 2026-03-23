@@ -14,10 +14,10 @@ namespace DeathCorpses
             var configs = api.ModLoader.GetModSystem<ConfigManager>();
             Config = configs.GetConfig<Config>();
 
-            api.World.Config.SetBool($"{Mod.Info.ModID}:GraveCompassEnabled", Config.GraveCompassEnabled);
+            api.World.Config.SetBool($"{Mod.Info.ModID}:CorpseCompassEnabled", Config.CorpseCompassEnabled);
 
-            api.RegisterEntity("EntityPlayerGrave", typeof(EntityPlayerGrave));
-            api.RegisterItemClass("ItemGraveCompass", typeof(ItemGraveCompass));
+            api.RegisterEntity("EntityPlayerCorpse", typeof(EntityPlayerCorpse));
+            api.RegisterItemClass("ItemCorpseCompass", typeof(ItemCorpseCompass));
         }
 
         public override void AssetsLoaded(ICoreAPI api)

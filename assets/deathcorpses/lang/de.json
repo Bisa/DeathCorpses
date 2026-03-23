@@ -1,13 +1,13 @@
 {
     "item-creature-deathcorpses": "Spielerleiche",
     "blockhelp-collect": "Einsammeln",
-    "game:ingameerror-not-grave-owner": "Das ist nicht deine Leiche!",
-    "grave-free": "Frei für jeden",
-    "grave-created(date={0})": "Erstellt {0}",
-    "item-gravecompass": "Leichenkompass",
-    "deathcorpses:item-handbooktitle-deathcorpses:gravecompass": "Verwendung",
-    "deathcorpses:item-handbooktext-deathcorpses:gravecompass": "Hilft dir, deine Leichen zu finden. Serveradministratoren können auch das Serverprotokoll überprüfen, um die genauen Koordinaten aller Leichen herauszufinden (server-main.txt). <br/><br/><b> Funktioniert nur für die aktuelle Chunk-Spalte, standardmäßig sind dies 32x256x32 Blöcke</b>",
-    "gravecompass-graves-not-found": "Keine Leichen in dieser Chunk-Spalte gefunden",
-    "gravecompass-target-set": "Ziel auf die letzte Leiche gesetzt",
-    "gravecompass-no-last-grave": "Keine letzte Leiche gefunden"
+    "game:ingameerror-not-corpse-owner": "Das ist nicht deine Leiche!",
+    "corpse-free": "Frei für jeden",
+    "corpse-created(date={0})": "Erstellt {0}",
+    "item-corpsecompass": "Leichenkompass",
+    "deathcorpses:item-handbooktitle-deathcorpses:corpsecompass": "Verwendung",
+    "deathcorpses:item-handbooktext-deathcorpses:corpsecompass": "Hilft dir, deine Leichen zu finden. Serveradministratoren können auch das Serverprotokoll überprüfen, um die genauen Koordinaten aller Leichen herauszufinden (server-main.txt). <br/><br/><b> Funktioniert nur für die aktuelle Chunk-Spalte, standardmäßig sind dies 32x256x32 Blöcke</b>",
+    "corpsecompass-corpses-not-found": "Keine Leichen in dieser Chunk-Spalte gefunden",
+    "corpsecompass-target-set": "Ziel auf die letzte Leiche gesetzt",
+    "corpsecompass-no-last-corpse": "Keine letzte Leiche gefunden"
 }

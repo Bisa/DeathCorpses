@@ -1,13 +1,13 @@
 {
     "item-creature-deathcorpses": "Труп игрока",
     "blockhelp-collect": "Собрать",
-    "game:ingameerror-not-grave-owner": "Это не ваш труп!",
-    "grave-free": "Доступен для всех",
-    "grave-created(date={0})": "Создано: {0}",
-    "item-gravecompass": "Компас для трупов",
-    "deathcorpses:item-handbooktitle-deathcorpses:gravecompass": "Применение",
-    "deathcorpses:item-handbooktext-deathcorpses:gravecompass": "Помогает найти ваши трупы. Администраторы серверов также могут проверить точные координаты всех трупов в журнале server-main.txt (используйте в креативе)<br/><br/><b>Ищет в 7x7 чанках вокруг игрока (224x256x224 блоков по умолчанию)</b>",
-    "gravecompass-graves-not-found": "Нет трупов вокруг",
-    "gravecompass-target-set": "Цель установлена на последний труп",
-    "gravecompass-no-last-grave": "Предыдущий труп не найден"
+    "game:ingameerror-not-corpse-owner": "Это не ваш труп!",
+    "corpse-free": "Доступен для всех",
+    "corpse-created(date={0})": "Создано: {0}",
+    "item-corpsecompass": "Компас для трупов",
+    "deathcorpses:item-handbooktitle-deathcorpses:corpsecompass": "Применение",
+    "deathcorpses:item-handbooktext-deathcorpses:corpsecompass": "Помогает найти ваши трупы. Администраторы серверов также могут проверить точные координаты всех трупов в журнале server-main.txt (используйте в креативе)<br/><br/><b>Ищет в 7x7 чанках вокруг игрока (224x256x224 блоков по умолчанию)</b>",
+    "corpsecompass-corpses-not-found": "Нет трупов вокруг",
+    "corpsecompass-target-set": "Цель установлена на последний труп",
+    "corpsecompass-no-last-corpse": "Предыдущий труп не найден"
 }

@@ -67,33 +67,33 @@ namespace DeathCorpses.Systems
                 return;
             }
 
-            var graveEntity = CreateGraveEntity(byPlayer);
-            if (graveEntity.Inventory != null && !graveEntity.Inventory.Empty)
+            var corpseEntity = CreateCorpseEntity(byPlayer);
+            if (corpseEntity.Inventory != null && !corpseEntity.Inventory.Empty)
             {
                 if (Core.Config.CreateWaypoint == Config.CreateWaypointMode.Always)
                 {
                     if (byPlayer.Entity is EntityPlayer ep)
                     {
-                        CreateDeathPoint(byPlayer.Entity, graveEntity);
+                        CreateDeathPoint(byPlayer.Entity, corpseEntity);
                     }
                 }
 
-                // Save content for /returnthings
-                if (Core.Config.MaxDeathContentSavedPerPlayer > 0)
+                // Save content for /dc corpse
+                if (Core.Config.MaxCorpsesSavedPerPlayer > 0)
                 {                    
-                    SaveDeathContent(graveEntity.Inventory, byPlayer);
+                    SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ);
                 }
 
-                // Spawn grave
-                if (Core.Config.CreateGrave)
+                // Spawn corpse
+                if (Core.Config.CreateCorpse)
                 {
-                    _sapi.World.SpawnEntity(graveEntity);
+                    _sapi.World.SpawnEntity(corpseEntity);
 
                     string message = string.Format(
                         "Created {0} at {1}, id {2}",
-                        graveEntity.GetName(),
-                        graveEntity.SidedPos.XYZ.RelativePos(_sapi),
-                        graveEntity.EntityId);
+                        corpseEntity.GetName(),
+                        corpseEntity.SidedPos.XYZ.RelativePos(_sapi),
+                        corpseEntity.EntityId);
 
                     Mod.Logger.Notification(message);
                     if (Core.Config.DebugMode)
@@ -102,15 +102,15 @@ namespace DeathCorpses.Systems
                     }
                 }
 
-                // Or drop all if grave creations is disabled
+                // Or drop all if corpse creation is disabled
                 else
                 {
-                    graveEntity.Inventory.DropAll(graveEntity.Pos.XYZ);
+                    corpseEntity.Inventory.DropAll(corpseEntity.Pos.XYZ);
                 }
             }
             else
             {
-                string message = $"Inventory is empty, {graveEntity.OwnerName}'s grave not created";
+                string message = $"Inventory is empty, {corpseEntity.OwnerName}'s corpse not created";
                 Mod.Logger.Notification(message);
                 if (Core.Config.DebugMode)
                 {
@@ -119,33 +119,33 @@ namespace DeathCorpses.Systems
             }
         }
 
-        private EntityPlayerGrave CreateGraveEntity(IServerPlayer byPlayer)
+        private EntityPlayerCorpse CreateCorpseEntity(IServerPlayer byPlayer)
         {
             var entityType = _sapi.World.GetEntityType(new AssetLocation(Constants.ModId, "deathcorpses"));
 
-            if (_sapi.World.ClassRegistry.CreateEntity(entityType) is not EntityPlayerGrave grave)
+            if (_sapi.World.ClassRegistry.CreateEntity(entityType) is not EntityPlayerCorpse corpse)
             {
-                throw new Exception("Unable to instantiate player grave");
+                throw new Exception("Unable to instantiate player corpse");
             }
 
-            grave.OwnerUID = byPlayer.PlayerUID;
-            grave.OwnerName = byPlayer.PlayerName;
-            grave.CreationTime = _sapi.World.Calendar.TotalHours;
-            grave.CreationRealDatetime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            corpse.OwnerUID = byPlayer.PlayerUID;
+            corpse.OwnerName = byPlayer.PlayerName;
+            corpse.CreationTime = _sapi.World.Calendar.TotalHours;
+            corpse.CreationRealDatetime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-            grave.Inventory = TakeContentFromPlayer(byPlayer);
+            corpse.Inventory = TakeContentFromPlayer(byPlayer);
 
-            // Fix dancing grave issue
+            // Fix dancing corpse issue
             BlockPos floorPos = TryFindFloor(byPlayer.Entity.ServerPos.AsBlockPos);
 
-            // Attempt to align the grave to the center of the block so that it does not crawl higher
+            // Attempt to align the corpse to the center of the block so that it does not crawl higher
             Vec3d pos = floorPos.ToVec3d().Add(.5, 0, .5);
 
-            grave.ServerPos.SetPos(pos);
-            grave.Pos.SetPos(pos);
-            grave.World = _sapi.World;
+            corpse.ServerPos.SetPos(pos);
+            corpse.Pos.SetPos(pos);
+            corpse.World = _sapi.World;
 
-            return grave;
+            return corpse;
         }
 
         /// <summary> Try to find the nearest block with collision below </summary>
@@ -167,7 +167,7 @@ namespace DeathCorpses.Systems
 
         private InventoryGeneric TakeContentFromPlayer(IServerPlayer byPlayer)
         {
-            var inv = new InventoryGeneric(GetMaxGraveSlots(byPlayer), $"deathcorpses-{byPlayer.PlayerUID}", _sapi);
+            var inv = new InventoryGeneric(GetMaxCorpseSlots(byPlayer), $"deathcorpses-{byPlayer.PlayerUID}", _sapi);
 
             int lastSlotId = 0;
             foreach (var invClassName in Core.Config.SaveInventoryTypes)
@@ -206,14 +206,14 @@ namespace DeathCorpses.Systems
             return inv;
         }
 
-        private static int GetMaxGraveSlots(IServerPlayer byPlayer)
+        private static int GetMaxCorpseSlots(IServerPlayer byPlayer)
         {
-            int maxGraveSlots = 0;
+            int maxCorpseSlots = 0;
             foreach (var invClassName in Core.Config.SaveInventoryTypes)
             {
-                maxGraveSlots += byPlayer.InventoryManager.GetOwnInventory(invClassName)?.Count ?? 0;
+                maxCorpseSlots += byPlayer.InventoryManager.GetOwnInventory(invClassName)?.Count ?? 0;
             }
-            return maxGraveSlots;
+            return maxCorpseSlots;
         }
 
         private static ItemStack? TakeSlotContent(ItemSlot slot)
@@ -236,7 +236,7 @@ namespace DeathCorpses.Systems
             return slot.TakeOutWhole();
         }
 
-        //public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave graveEntity)
+        //public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
         //{
         //    if (byPlayer.Api is ICoreServerAPI)
         //    {
@@ -256,23 +256,23 @@ namespace DeathCorpses.Systems
         //            Icon = Core.Config.WaypointIcon,
         //            Color = ColorTranslator.FromHtml(Core.Config.WaypointColor).ToArgb(),
         //            OwningPlayerUid = byPlayer.PlayerUID,
-        //            Guid = graveEntity.GraveId.ToString()
+        //            Guid = corpseEntity.CorpseId.ToString()
         //        };
 
         //        mapLayer.AddWaypoint(wp, byPlayer.Player as IServerPlayer);
         //    }
         //}
 
-        public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave graveEntity)
+        public static void CreateDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
         {
             if (byPlayer?.Api is not ICoreServerAPI sapi) return;
 
             var sp = byPlayer.Player as IServerPlayer;
             if (sp == null) return;
 
-            int absX = (int)graveEntity.ServerPos.X;
-            int absY = (int)graveEntity.ServerPos.Y;
-            int absZ = (int)graveEntity.ServerPos.Z;
+            int absX = (int)corpseEntity.ServerPos.X;
+            int absY = (int)corpseEntity.ServerPos.Y;
+            int absZ = (int)corpseEntity.ServerPos.Z;
 
             var spawn = sapi.World.DefaultSpawnPosition;
             int x = absX - (int)spawn.X;
@@ -301,7 +301,7 @@ namespace DeathCorpses.Systems
                 sapi.Logger.Notification($"Waypoint cmd: {result.Status} - {result.StatusMessage}");
                 if (result.Status != EnumCommandStatus.Success) return;
                 var m = Regex.Match(result.StatusMessage, @"nr\.\s*(\d+)");
-                if (m.Success) graveEntity.WaypointID = int.Parse(m.Groups[1].Value);
+                if (m.Success) corpseEntity.WaypointID = int.Parse(m.Groups[1].Value);
             });
         }
 
@@ -310,9 +310,9 @@ namespace DeathCorpses.Systems
         //    return api.ModLoader.GetModSystem<WorldMapManager>().MapLayers.FirstOrDefault(ml => ml is WaypointMapLayer) as WaypointMapLayer;
         //}
 
-        //public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave graveEntity)
+        //public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
         //{
-        //    if (byPlayer is null || graveEntity is null) return;
+        //    if (byPlayer is null || corpseEntity is null) return;
 
         //    if (byPlayer.Api is ICoreServerAPI sapi)
         //    {
@@ -320,10 +320,10 @@ namespace DeathCorpses.Systems
         //        var mapLayer = GetMapLayer(sapi);
         //        var waypoints = mapLayer?.Waypoints ?? [];
 
-        //        //For every waypoint the player owns, check if it matches the grave entity id and remove it
+        //        //For every waypoint the player owns, check if it matches the corpse entity id and remove it
         //        foreach (Waypoint waypoint in waypoints.ToList().Where(w => w.OwningPlayerUid == byPlayer.PlayerUID))
         //        {
-        //            if (waypoint.Guid == graveEntity.GraveId.ToString())
+        //            if (waypoint.Guid == corpseEntity.CorpseId.ToString())
         //            {
         //                waypoints.Remove(waypoint);
         //                _resendWaypointsMethod.Invoke(mapLayer, [serverPlayer]);
@@ -333,9 +333,9 @@ namespace DeathCorpses.Systems
         //    }
         //}
 
-        public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerGrave graveEntity)
+        public static void RemoveDeathPoint(EntityPlayer byPlayer, EntityPlayerCorpse corpseEntity)
         {
-            if (graveEntity.WaypointID < 0) return;
+            if (corpseEntity.WaypointID < 0) return;
             if (byPlayer?.Api is not ICoreServerAPI sapi) return;
 
             var sp = byPlayer.Player as IServerPlayer;
@@ -348,7 +348,7 @@ namespace DeathCorpses.Systems
                     Player = sp,
                     Entity = byPlayer
                 },
-                RawArgs = new CmdArgs($"remove {graveEntity.WaypointID}")
+                RawArgs = new CmdArgs($"remove {corpseEntity.WaypointID}")
             };
 
             sapi.ChatCommands.Execute("waypoint", callArgs, (result) =>
@@ -376,26 +376,43 @@ namespace DeathCorpses.Systems
                 .ToArray();
         }
 
-        public void SaveDeathContent(InventoryGeneric inventory, IPlayer player)
+        public void SaveDeathContent(InventoryGeneric inventory, IPlayer player, Vec3d gravePos)
         {
             string path = GetDeathDataPath(player);
             string[] files = GetDeathDataFiles(player);
 
-            for (int i = files.Length - 1; i > Core.Config.MaxDeathContentSavedPerPlayer - 2; i--)
+            for (int i = files.Length - 1; i > Core.Config.MaxCorpsesSavedPerPlayer - 2; i--)
             {
                 File.Delete(files[i]);
             }
 
             var tree = new TreeAttribute();
             inventory.ToTreeAttributes(tree);
+            tree.SetInt("graveX", (int)gravePos.X);
+            tree.SetInt("graveY", (int)gravePos.Y);
+            tree.SetInt("graveZ", (int)gravePos.Z);
 
             string name = $"inventory-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.dat";
             File.WriteAllBytes($"{path}/{name}", tree.ToBytes());
         }
 
+        public BlockPos? LoadCorpsePosition(string filePath)
+        {
+            var tree = new TreeAttribute();
+            tree.FromBytes(File.ReadAllBytes(filePath));
+
+            if (!tree.HasAttribute("graveX"))
+                return null;
+
+            return new BlockPos(
+                tree.GetInt("graveX"),
+                tree.GetInt("graveY"),
+                tree.GetInt("graveZ"));
+        }
+
         public InventoryGeneric LoadLastDeathContent(IPlayer player, int offset = 0)
         {
-            if (Core.Config.MaxDeathContentSavedPerPlayer <= offset)
+            if (Core.Config.MaxCorpsesSavedPerPlayer <= offset)
             {
                 throw new IndexOutOfRangeException("offset is too large or save data disabled");
             }

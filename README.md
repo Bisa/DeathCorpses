@@ -24,23 +24,26 @@ Forked from the adapted [PlayerGrave](https://mods.vintagestory.at/show/mod/3944
 
 ### How it works
 
-When you die with items in your inventory, a grave is spawned at your feet containing all of your items. A waypoint is added to your map marking the grave location. 
+When you die with items in your inventory, a corpse is spawned at your feet containing all of your items. A waypoint is added to your map marking the corpse location.
 
-Right-click and hold on the grave to collect your items once you have returned to the location of your death.
+Right-click and hold on the corpse to collect your items once you have returned to the location of your death.
 
 Once collected (or destroyed), the waypoint is optionally (on by default) removed.
 
-A **Grave Compass** item can be crafted to help locate nearby graves when you're unsure of their exact position.
+A **Corpse Compass** item can be crafted to help locate nearby corpses when you're unsure of their exact position.
 
 ### Commands
 
-All commands require the privilege configured in `NeedPrivilegeForReturnThings` (default: `gamemode`).
+All commands require the privilege configured in `CommandPrivilege` (default: `gamemode`).
 
 | Command | Description |
 |---|---|
-| `/returnthings list <player>` | Lists all saved death inventories for a player, numbered by date |
-| `/returnthings get <player> <give to player> [id]` | Restores a saved death inventory to a player. `id` is the index from `list` (default: `0`, most recent) |
-| `/returnthings remove <player> [id]` | Deletes saved death inventories for a player. If `id` is given, only that entry is removed; otherwise all are deleted |
+| `/dc corpse list <player>` | Lists all saved corpses for a player, numbered by date |
+| `/dc corpse get <player> <give to player> [id]` | Restores a corpse's inventory to a player. `id` is the index from `list` (default: `0`, most recent) |
+| `/dc corpse remove <player> [id]` | Removes corpses for a player. If `id` is given, only that saved corpse is removed. Without `id`, deletes all saved corpses and despawns any corpse entities in the world |
+| `/dc config list` | Shows all config options and their current values |
+| `/dc config get <option>` | Shows the current value of a specific config option |
+| `/dc config set <option> <value>` | Changes a config option at runtime and saves it to disk |
 
 ### Configuration
 
@@ -48,23 +51,23 @@ The config file is created at `ModConfig/deathcorpses.json` on first run. All se
 
 | Setting | Default | Description |
 |---|---|---|
-| `CanFired` | `false` | Whether the grave can burn in lava/fire (destroyed after ~15 seconds) |
-| `HasHealth` | `false` | Whether the grave has 100 HP and can be broken by other players |
-| `CreateGrave` | `true` | Whether a grave entity is spawned at all. If false, items are dropped on the ground |
-| `SaveInventoryTypes` | hotbar, backpack, crafting, cursor, character | Which inventory slots are saved into the grave |
-| `NeedPrivilegeForReturnThings` | `gamemode` | Privilege required to use `/returnthings` |
-| `MaxDeathContentSavedPerPlayer` | `10` | How many death inventories to keep on disk per player (for `/returnthings`) |
+| `CanFired` | `false` | Whether the corpse can burn in lava/fire (destroyed after ~15 seconds) |
+| `HasHealth` | `false` | Whether the corpse has 100 HP and can be broken by other players |
+| `CreateCorpse` | `true` | Whether a corpse entity is spawned at all. If false, items are dropped on the ground |
+| `SaveInventoryTypes` | hotbar, backpack, crafting, cursor, character | Which inventory slots are saved into the corpse |
+| `CommandPrivilege` | `gamemode` | Privilege required to use `/dc` commands |
+| `MaxCorpsesSavedPerPlayer` | `10` | How many corpses to keep on disk per player (for `/dc corpse`) |
 | `CreateWaypoint` | `Auto` | Whether to create a death waypoint. `Auto` disables it if another mod already handles death waypoints, `Always` forces it, `None` disables it |
 | `WaypointIcon` | `bee` | Icon for the death waypoint. Options: `circle`, `bee`, `cave`, `home`, `ladder`, `pick`, `rocks`, `ruins`, `spiral`, `star1`, `star2`, `trader`, `vessel`, etc. |
 | `WaypointColor` | `crimson` | Color for the death waypoint. Accepts .NET color names (see [99colors.net](https://www.99colors.net/dot-net-colors)) |
 | `PinWaypoint` | `true` | Whether the death waypoint is pinned on the map |
 | `DisableVanillaDeathWaypoint` | `true` | Suppresses the vanilla "You died here" tombstone waypoint |
-| `RemoveWaypointOnCollect` | `true` | Removes the death waypoint when the grave is collected |
-| `FreeGraveAfterTime` | `240` | In-game hours after which anyone can collect the grave. `0` = always free, negative = never free |
-| `GraveCollectionTime` | `1` | Seconds of right-click hold required to collect the grave |
-| `GraveCompassEnabled` | `true` | Enables the Grave Compass item. Setting to `false` turns existing compasses into unknown items |
-| `DropArmorOnDeath` | `Vanilla` | Controls armor drop behaviour. `Vanilla` = respect the game's own setting, `Armor` = always save armor into the grave, `ArmorAndCloth` = save armor and clothing |
-| `DebugMode` | `false` | Broadcasts internal grave creation/collection messages to all players |
+| `RemoveWaypointOnCollect` | `true` | Removes the death waypoint when the corpse is collected |
+| `FreeCorpseAfterTime` | `240` | In-game hours after which anyone can collect the corpse. `0` = always free, negative = never free |
+| `CorpseCollectionTime` | `1` | Seconds of right-click hold required to collect the corpse |
+| `CorpseCompassEnabled` | `true` | Enables the Corpse Compass item. Setting to `false` turns existing compasses into unknown items |
+| `DropArmorOnDeath` | `Vanilla` | Controls armor drop behaviour. `Vanilla` = respect the game's own setting, `Armor` = always save armor into the corpse, `ArmorAndCloth` = save armor and clothing |
+| `DebugMode` | `false` | Broadcasts internal corpse creation/collection messages to all players |
 
 ---
 

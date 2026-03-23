@@ -13,7 +13,7 @@ namespace DeathCorpses
         [Description("Has 100 hp, can be broken by another player")]
         public bool HasHealth { get; set; } = false;
 
-        public bool CreateGrave { get; set; } = true;
+        public bool CreateCorpse { get; set; } = true;
 
         public string[] SaveInventoryTypes { get; set; } =
         [
@@ -25,10 +25,10 @@ namespace DeathCorpses
         ];
 
         [Privileges]
-        public string NeedPrivilegeForReturnThings { get; set; } = Privilege.gamemode;
+        public string CommandPrivilege { get; set; } = Privilege.gamemode;
 
         [Range(0, int.MaxValue)]
-        public int MaxDeathContentSavedPerPlayer { get; set; } = 10;
+        public int MaxCorpsesSavedPerPlayer { get; set; } = 10;
 
         [Description("Auto mode will try to resolve conflicts with other mods")]
         public CreateWaypointMode CreateWaypoint { get; set; } = CreateWaypointMode.Auto;
@@ -45,20 +45,20 @@ namespace DeathCorpses
         [Description("If true, disables the vanilla 'You died here' death waypoint for the player")]
         public bool DisableVanillaDeathWaypoint { get; set; } = true;
 
-        [Description("If true, the waypoint will be removed when the grave is collected")]
+        [Description("If true, the waypoint will be removed when the corpse is collected")]
         public bool RemoveWaypointOnCollect { get; set; } = true;
         public bool DebugMode { get; set; } = false;
 
-        [Description("Makes graves available to everyone after N in-game hours (0 - always, below zero - never)")]
-        public int FreeGraveAfterTime { get; set; } = 240;
+        [Description("Makes corpses available to everyone after N in-game hours (0 - always, below zero - never)")]
+        public int FreeCorpseAfterTime { get; set; } = 240;
 
-        [Description("Grave collection time in seconds")]
-        public float GraveCollectionTime { get; set; } = 1;
+        [Description("Corpse collection time in seconds")]
+        public float CorpseCollectionTime { get; set; } = 1;
 
         [Description("If you set it to false, all already existing compasses will turn into an unknown item")]
-        public bool GraveCompassEnabled { get; set; } = true;
+        public bool CorpseCompassEnabled { get; set; } = true;
 
-        [Description("Override vanilla keep inventory system, so you can drop armor and cloth")]
+        [Description("Override vanilla keep inventory system, so you can drop armor and clothing into the corpse")]
         public DropArmorMode DropArmorOnDeath { get; set; } = DropArmorMode.Vanilla;
         public enum DropArmorMode { Vanilla, Armor, ArmorAndCloth };
     }

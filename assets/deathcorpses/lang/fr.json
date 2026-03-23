@@ -1,13 +1,13 @@
 {
     "item-creature-deathcorpses": "Cadavre de joueur",
     "blockhelp-collect": "Récupérer",
-    "game:ingameerror-not-grave-owner": "Ce n'est pas votre corps !",
-    "grave-free": "Tout le monde peut récupérer le butin",
-    "grave-created(date={0})": "Date du décès : {0}",
-    "item-gravecompass": "Boussole à cadavres",
-    "deathcorpses:item-handbooktitle-deathcorpses:gravecompass": "Utilisation",
-    "deathcorpses:item-handbooktext-deathcorpses:gravecompass": "Aide à trouver vos cadavres. Les administrateurs du serveur peuvent également vérifier le log de serveur-main.txt pour les coordonnées exactes de tous les cadavres (s'utilise en Créatif)<br/><br/><b>Cherche sur 7x7 tronçons autour du joueur (224x256x224 blocs par défaut)</b>",
-    "gravecompass-graves-not-found": "Aucun cadavre trouvé aux alentours",
-    "gravecompass-target-set": "Cible définie sur le dernier cadavre",
-    "gravecompass-no-last-grave": "Dernier cadavre non trouvé"
+    "game:ingameerror-not-corpse-owner": "Ce n'est pas votre corps !",
+    "corpse-free": "Tout le monde peut récupérer le butin",
+    "corpse-created(date={0})": "Date du décès : {0}",
+    "item-corpsecompass": "Boussole à cadavres",
+    "deathcorpses:item-handbooktitle-deathcorpses:corpsecompass": "Utilisation",
+    "deathcorpses:item-handbooktext-deathcorpses:corpsecompass": "Aide à trouver vos cadavres. Les administrateurs du serveur peuvent également vérifier le log de serveur-main.txt pour les coordonnées exactes de tous les cadavres (s'utilise en Créatif)<br/><br/><b>Cherche sur 7x7 tronçons autour du joueur (224x256x224 blocs par défaut)</b>",
+    "corpsecompass-corpses-not-found": "Aucun cadavre trouvé aux alentours",
+    "corpsecompass-target-set": "Cible définie sur le dernier cadavre",
+    "corpsecompass-no-last-corpse": "Dernier cadavre non trouvé"
 }
