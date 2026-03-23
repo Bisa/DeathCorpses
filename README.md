@@ -40,6 +40,34 @@ nix build .#fetch-deps && ./result ./deps.json
 
 ---
 
+## Verifying release artifacts
+
+Every release zip is built by CI from a tagged commit using the same Nix flake as this repo. Because Nix locks every dependency by hash, the build is reproducible: building the same tag locally will produce a bit-for-bit identical zip.
+
+To verify that a release artifact matches the source:
+
+**1. Download the release zip from GitHub**
+
+Find the zip attached to a release on the [releases page](https://github.com/Bisa/DeathCorpses/releases) and note its SHA-256 hash:
+
+```sh
+sha256sum deathcorpses-<version>.zip
+```
+
+**2. Checkout the corresponding tag and build it yourself**
+
+```sh
+git clone https://github.com/Bisa/DeathCorpses
+cd DeathCorpses
+git checkout <version>
+nix build .#zip
+sha256sum ./result
+```
+
+If both hashes match, the artifact on GitHub is exactly what was built from that commit — nothing was added, removed, or tampered with.
+
+---
+
 ## Versioning
 
 This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
