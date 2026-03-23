@@ -152,7 +152,7 @@ This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PA
 
 The version in `modinfo.json` is the single source of truth. It must be committed before tagging — the release CI enforces this by failing if the tag does not exactly match the version in `modinfo.json`.
 
-Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234`) to distinguish them from clean releases.
+Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234-dirty`) to distinguish them from clean releases.
 
 ---
 
@@ -167,10 +167,10 @@ CI will build both zips (net10 and net8) and publish a GitHub release automatica
 
 ### Release candidates
 
-To publish a prerelease from any branch or commit without a tag, trigger the **Prerelease** workflow manually:
+To publish a prerelease from any branch or commit without a tag, trigger the **Release** workflow manually:
 
 ```sh
-gh workflow run prerelease.yml -f ref=main
+gh workflow run release.yml -f ref=main
 ```
 
 Or use the GitHub Actions UI. This produces a prerelease tagged `1.0.0-rc.abc1234` (base version from `modinfo.json` + short commit hash).

@@ -4,41 +4,61 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or commit to build from'
+        default: 'main'
+        required: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      IS_PRERELEASE: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.inputs.ref || github.ref }}
 
       - uses: cachix/install-nix-action@v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Read mod and target info
+      - name: Determine version
         id: info
         run: |
           MODID=$(jq -r .modid modinfo.json)
-          VERSION=$(jq -r .version modinfo.json)
-          TAG=${{ github.ref_name }}
-
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "ERROR: modinfo.json version ($VERSION) does not match tag ($TAG)"
-            echo "Bump the version in modinfo.json and commit it before tagging."
-            exit 1
-          fi
-
+          BASE_VERSION=$(jq -r .version modinfo.json)
           VS_NET10=$(jq -r .net10.gameVersion targets.json)
           VS_NET8=$(jq -r .net8.gameVersion targets.json)
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            VERSION="${BASE_VERSION}-rc.${{ github.run_number }}"
+          else
+            VERSION="$BASE_VERSION"
+            TAG=${{ github.ref_name }}
+            if [ "$VERSION" != "$TAG" ]; then
+              echo "ERROR: modinfo.json version ($VERSION) does not match tag ($TAG)"
+              echo "Bump the version in modinfo.json and commit it before tagging."
+              exit 1
+            fi
+          fi
 
           echo "modid=$MODID" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "vs_net10=$VS_NET10" >> $GITHUB_OUTPUT
           echo "vs_net8=$VS_NET8" >> $GITHUB_OUTPUT
+
+      - name: Patch version into modinfo.json
+        if: env.IS_PRERELEASE == 'true'
+        run: |
+          VERSION=${{ steps.info.outputs.version }}
+          jq --arg v "$VERSION" '.version = $v' modinfo.json > modinfo.tmp && mv modinfo.tmp modinfo.json
+          git add modinfo.json
+          git -c user.name="CI" -c user.email="ci@noreply" commit -m "prerelease $VERSION"
 
       - name: Build mod zips
         run: |
@@ -54,14 +74,27 @@ jobs:
           cp result "${MODID}-vs${VS_NET8}_${VERSION}.zip"
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "${{ steps.info.outputs.version }}"
-          tag_name: ${{ github.ref_name }}
-          files: |
-            ${{ steps.info.outputs.modid }}-vs${{ steps.info.outputs.vs_net10 }}_${{ steps.info.outputs.version }}.zip
-            ${{ steps.info.outputs.modid }}-vs${{ steps.info.outputs.vs_net8 }}_${{ steps.info.outputs.version }}.zip
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MODID=${{ steps.info.outputs.modid }}
+          VERSION=${{ steps.info.outputs.version }}
+          VS_NET10=${{ steps.info.outputs.vs_net10 }}
+          VS_NET8=${{ steps.info.outputs.vs_net8 }}
+
+          PRERELEASE_FLAGS=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAGS="--prerelease"
+          fi
+
+          gh release create "${VERSION}" \
+            --draft \
+            $PRERELEASE_FLAGS \
+            --title "${VERSION}" \
+            --generate-notes \
+            "${MODID}-vs${VS_NET10}_${VERSION}.zip" \
+            "${MODID}-vs${VS_NET8}_${VERSION}.zip"
+          gh release edit "${VERSION}" --draft=false
 
       - name: Summary
         run: |

@@ -17,9 +17,9 @@
 
         targetInfo = builtins.fromJSON (builtins.readFile ./targets.json);
 
-        # For local dirty builds, append git short hash to distinguish from a clean release.
-        # CI always builds from a clean tagged commit, so modBaseVersion is used as-is.
-        modVersion =
+        # nixVersion: informational, used for nix store paths and zip filenames.
+        # modinfo.json gets a per-target version with -vs<short> suffix (set in mkMod).
+        nixVersion =
           if self ? dirtyShortRev then "${modBaseVersion}+${self.dirtyShortRev}"
           else modBaseVersion;
 
@@ -54,7 +54,7 @@
           let vsLibs = mkVsLibs target; in
           pkgs.buildDotnetModule {
             pname = "${modId}-${target.targetFramework}";
-            version = modVersion;  # used for nix store path only; modinfo.json is patched in preBuild
+            version = nixVersion;  # nix store path only; modinfo.json is patched separately in preBuild
             src = ./.;
 
             projectFile = "${modId}.csproj";
@@ -73,7 +73,7 @@
 
             preBuild = ''
               export VintageStoryInstallDir="${vsLibs}"
-              jq '.version = "${modVersion}" | .dependencies.game = "${target.gameVersion}"' \
+              jq '.dependencies.game = "${target.gameVersion}"' \
                 modinfo.json > modinfo.tmp && mv modinfo.tmp modinfo.json
             '';
 
@@ -95,7 +95,7 @@
 
         mkZip = target:
           let mod = mkMod target; in
-          pkgs.runCommand "${modId}-vs${target.gameVersion}_${modVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
+          pkgs.runCommand "${modId}-vs${target.gameVersion}_${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
             cd ${mod}
             find . | sort | zip -X -@ $out
           '';
