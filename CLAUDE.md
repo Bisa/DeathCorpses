@@ -71,6 +71,7 @@ When the user gives feedback or instructions that sound like they should apply "
 
 ## Conventions
 
+- **Conventional Commits** — all commit messages must follow `<type>[scope]: <description>`. Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. A local hook (`.githooks/commit-msg`) and CI workflow (`.github/workflows/commits.yml`) enforce this. Changelogs are generated from these commits using `git-cliff` (`cliff.toml`).
 - **Always update README.md** when adding or removing functionality/features — especially user-facing admin commands and configuration settings.
 
 ## Releasing

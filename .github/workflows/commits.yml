@@ -1,0 +1,43 @@
+name: Commits
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate conventional commits
+        run: |
+          MERGE_BASE=$(git merge-base ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+'
+          FAILED=0
+
+          while IFS= read -r line; do
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+
+            # Skip merge/fixup/squash commits
+            if echo "$MSG" | grep -qE '^(Merge|Revert|fixup!|squash!) '; then
+              continue
+            fi
+
+            if ! echo "$MSG" | grep -qE "$PATTERN"; then
+              echo "::error::Non-conventional commit $HASH: $MSG"
+              FAILED=1
+            fi
+          done < <(git log --oneline "$MERGE_BASE..${{ github.event.pull_request.head.sha }}")
+
+          if [ "$FAILED" = "1" ]; then
+            echo ""
+            echo "All commits must follow Conventional Commits: <type>[scope]: <description>"
+            echo "Allowed types: feat fix docs style refactor perf test build ci chore revert"
+            exit 1
+          fi
+
+          echo "All commits follow Conventional Commits."

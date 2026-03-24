@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Validates that commit messages follow the Conventional Commits spec.
+# Install: git config core.hooksPath .githooks
+
+msg=$(head -1 "$1")
+
+# Allow merge commits and fixup/squash commits
+if echo "$msg" | grep -qE '^(Merge|Revert|fixup!|squash!) '; then
+  exit 0
+fi
+
+# Conventional Commits pattern: type(optional scope): description
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+'
+
+if ! echo "$msg" | grep -qE "$pattern"; then
+  echo "ERROR: Commit message does not follow Conventional Commits."
+  echo ""
+  echo "  Expected: <type>[optional scope]: <description>"
+  echo "  Example:  feat: add corpse compass item"
+  echo "            fix(loader): handle missing manifest resources"
+  echo ""
+  echo "  Allowed types: feat fix docs style refactor perf test build ci chore revert"
+  echo ""
+  exit 1
+fi

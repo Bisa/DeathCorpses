@@ -22,10 +22,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 0
 
       - uses: cachix/install-nix-action@v27
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Install git-cliff
+        run: |
+          GC_VERSION="2.7.0"
+          curl -sSfL "https://github.com/orhun/git-cliff/releases/download/v${GC_VERSION}/git-cliff-${GC_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C /usr/local/bin --strip-components=1 "git-cliff-${GC_VERSION}/git-cliff"
 
       - name: Determine version
         id: info
@@ -67,6 +74,14 @@ jobs:
       - name: Verify reproducibility
         run: nix build .#zip --rebuild
 
+      - name: Generate changelog
+        run: |
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            ./scripts/generate-changelog.sh --prerelease
+          else
+            ./scripts/generate-changelog.sh
+          fi
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,8 +98,9 @@ jobs:
             --draft \
             $PRERELEASE_FLAGS \
             --title "${VERSION}" \
-            --generate-notes \
-            "${MODID}-${VERSION}.zip"
+            --notes-file RELEASE_NOTES.md \
+            "${MODID}-${VERSION}.zip" \
+            CHANGELOG.md
           gh release edit "${VERSION}" --draft=false
 
       - name: Summary

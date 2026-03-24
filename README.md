@@ -153,6 +153,28 @@ sha256sum /tmp/deathcorpses-2.1.0-rc.15.zip
 
 ---
 
+## Contributing
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). All commit messages must follow the format:
+
+```
+<type>[optional scope]: <description>
+```
+
+Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+
+A local git hook validates messages before commit. It is configured automatically when entering the dev shell:
+
+```sh
+nix develop
+```
+
+If you don't use `nix develop`, enable it manually: `git config --local core.hooksPath .githooks`
+
+PR commits are also validated in CI.
+
+---
+
 ## Versioning
 
 This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`):
@@ -172,11 +194,19 @@ Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234
 ## Releasing
 
 1. Bump `"version"` in `modinfo.json`
-2. Commit: `git commit -am "release 1.0.1"`
+2. Commit: `git commit -am "chore: release 1.0.1"`
 3. Tag: `git tag 1.0.1`
 4. Push: `git push origin main 1.0.1`
 
-CI will build the zip and publish a GitHub release automatically. The build will fail if the tag does not match the version in `modinfo.json`.
+CI will build the zip, generate a changelog from conventional commits, and publish it as the GitHub release body. The build will fail if the tag does not match the version in `modinfo.json`.
+
+To preview the changelog locally:
+
+```sh
+nix develop
+./scripts/generate-changelog.sh              # stable
+./scripts/generate-changelog.sh --prerelease # prerelease
+```
 
 ### Release candidates
 

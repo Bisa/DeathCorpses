@@ -137,6 +137,13 @@
         packages.fetch-deps-net8 = implNet8.passthru.fetch-deps;
         # Usage: nix build .#fetch-deps-net10 && ./result ./deps/net10.0.json
         packages.fetch-deps-net10 = implNet10.passthru.fetch-deps;
+
+        devShells.default = pkgs.mkShell {
+          packages = [ pkgs.git-cliff pkgs.jq ];
+          shellHook = ''
+            git config --local core.hooksPath .githooks
+          '';
+        };
       }
     );
 }
