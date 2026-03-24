@@ -58,6 +58,13 @@ namespace DeathCorpses.Systems
                             parsers.OptionalInt("id", 0))
                         .HandleWith(TeleportToCorpse)
                     .EndSubCommand()
+                    .BeginSubCommand("tpother")
+                        .WithArgs(
+                            parsers.Player("target player", api),
+                            parsers.Player("corpse owner", api),
+                            parsers.OptionalInt("id", 0))
+                        .HandleWith(TeleportOtherToCorpse)
+                    .EndSubCommand()
                 .EndSubCommand()
                 .BeginSubCommand("config")
                     .WithDescription("View or change config settings")
@@ -195,11 +202,9 @@ namespace DeathCorpses.Systems
                 fileCount, player.PlayerName));
         }
 
-        private TextCommandResult TeleportToCorpse(TextCommandCallingArgs args)
+        private TextCommandResult TeleportPlayerToCorpse(IServerPlayer targetPlayer, IPlayer corpseOwner, int id)
         {
-            IPlayer player = (IPlayer)args[0];
-            int id = (int)args[1];
-            string[] files = _deathContentManager.GetDeathDataFiles(player);
+            string[] files = _deathContentManager.GetDeathDataFiles(corpseOwner);
 
             if (files.Length == 0)
             {
@@ -217,17 +222,41 @@ namespace DeathCorpses.Systems
                 return TextCommandResult.Error(Lang.Get("Corpse {0} has no saved position", id));
             }
 
+            if (!_sapi.World.AllOnlinePlayers.Contains(targetPlayer) || targetPlayer.Entity == null)
+            {
+                return TextCommandResult.Error(Lang.Get(
+                    "Player {0} is offline or not fully loaded.",
+                    targetPlayer.PlayerName));
+            }
+
+            targetPlayer.Entity.TeleportTo(pos.ToVec3d().Add(0.5, 0, 0.5));
+
+            return TextCommandResult.Success(Lang.Get(
+                "Teleported {0} to corpse {1} of {2} at {3}, {4}, {5}",
+                targetPlayer.PlayerName, id, corpseOwner.PlayerName, pos.X, pos.Y, pos.Z));
+        }
+
+        private TextCommandResult TeleportToCorpse(TextCommandCallingArgs args)
+        {
+            IPlayer corpseOwner = (IPlayer)args[0];
+            int id = (int)args[1];
+
             var caller = args.Caller.Player as IServerPlayer;
-            if (caller?.Entity == null)
+            if (caller == null)
             {
                 return TextCommandResult.Error(Lang.Get("You must be in-game to teleport"));
             }
 
-            caller.Entity.TeleportTo(pos.ToVec3d().Add(0.5, 0, 0.5));
+            return TeleportPlayerToCorpse(caller, corpseOwner, id);
+        }
 
-            return TextCommandResult.Success(Lang.Get(
-                "Teleported to corpse {0} of {1} at {2}, {3}, {4}",
-                id, player.PlayerName, pos.X, pos.Y, pos.Z));
+        private TextCommandResult TeleportOtherToCorpse(TextCommandCallingArgs args)
+        {
+            IServerPlayer targetPlayer = (IServerPlayer)args[0];
+            IPlayer corpseOwner = (IPlayer)args[1];
+            int id = (int)args[2];
+
+            return TeleportPlayerToCorpse(targetPlayer, corpseOwner, id);
         }
 
         private TextCommandResult ReturnThings(TextCommandCallingArgs args)
