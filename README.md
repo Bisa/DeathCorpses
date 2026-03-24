@@ -103,11 +103,11 @@ The resulting zip is at `./result` and is ready to drop into your `Mods/` folder
 
 ### Updating the (NuGet) Nix package lockfiles
 
-`deps/net8.0.json` and `deps/net10.0.json` pin the NuGet packages fetched during each impl build. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, regenerate both:
+`src/deps/net8.0.json` and `src/deps/net10.0.json` pin the NuGet packages fetched during each impl build. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, regenerate both:
 
 ```sh
-nix build .#fetch-deps-net8  && ./result ./deps/net8.0.json
-nix build .#fetch-deps-net10 && ./result ./deps/net10.0.json
+nix build .#fetch-deps-net8  && ./result ./src/deps/net8.0.json
+nix build .#fetch-deps-net10 && ./result ./src/deps/net10.0.json
 ```
 
 ---
@@ -140,7 +140,7 @@ If both hashes match, the artifact on GitHub is exactly what was built from that
 
 ### Verifying prereleases
 
-Prereleases (`-rc.N` versions) patch `modinfo.json` before building, so a plain `nix build` won't reproduce them. Use the included script to replicate the CI steps:
+Prereleases (`-rc.N` versions) patch `src/modinfo.json` before building, so a plain `nix build` won't reproduce them. Use the included script to replicate the CI steps:
 
 ```sh
 # Verify prerelease 2.1.0-rc.15 built from the main branch
@@ -185,7 +185,7 @@ This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PA
 | New features, backwards-compatible | `MINOR` |
 | Bug fixes | `PATCH` |
 
-The version in `modinfo.json` is the single source of truth. It must be committed before tagging — the release CI enforces this by failing if the tag does not exactly match the version in `modinfo.json`.
+The version in `src/modinfo.json` is the single source of truth. It must be committed before tagging — the release CI enforces this by failing if the tag does not exactly match the version in `src/modinfo.json`.
 
 Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234-dirty`) to distinguish them from clean releases.
 
@@ -193,12 +193,12 @@ Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234
 
 ## Releasing
 
-1. Bump `"version"` in `modinfo.json`
+1. Bump `"version"` in `src/modinfo.json`
 2. Commit: `git commit -am "chore: release 1.0.1"`
 3. Tag: `git tag 1.0.1`
 4. Push: `git push origin main 1.0.1`
 
-CI will build the zip, generate a changelog from conventional commits, and publish it as the GitHub release body. The build will fail if the tag does not match the version in `modinfo.json`.
+CI will build the zip, generate a changelog from conventional commits, and publish it as the GitHub release body. The build will fail if the tag does not match the version in `src/modinfo.json`.
 
 To preview the changelog locally:
 
@@ -216,5 +216,5 @@ To publish a prerelease from any branch or commit without a tag, trigger the **R
 gh workflow run release.yml -f ref=main
 ```
 
-Or use the GitHub Actions UI. This produces a prerelease tagged `1.0.0-rc.42` (base version from `modinfo.json` + CI run number).
+Or use the GitHub Actions UI. This produces a prerelease tagged `1.0.0-rc.42` (base version from `src/modinfo.json` + CI run number).
 

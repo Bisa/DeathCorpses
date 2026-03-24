@@ -17,53 +17,53 @@ This project uses **Nix Flakes** — no local .NET SDK is required.
 nix build .#zip
 
 # Update NuGet dependency lockfiles
-nix build .#fetch-deps-net8  && ./result ./deps/net8.0.json
-nix build .#fetch-deps-net10 && ./result ./deps/net10.0.json
+nix build .#fetch-deps-net8  && ./result ./src/deps/net8.0.json
+nix build .#fetch-deps-net10 && ./result ./src/deps/net10.0.json
 ```
 
 There is no test suite. To run the mod, copy `./result` to the Vintage Story `Mods/` folder and launch a server/client (v1.21.6+ or v1.22.0+).
 
 ## Architecture
 
-### Loader (`Loader/`)
+### Loader (`src/Loader/`)
 
-`Loader/Loader.cs` is the **only** `ModSystem` that VS sees. It is compiled as a net8.0 DLL (`deathcorpses.dll`) and acts as a bootstrap: at `StartPre` it detects the runtime version and loads the correct impl assembly (`deathcorpses-net8.bin` or `deathcorpses-net10.bin`). It then discovers all `ModSystem` subclasses in the impl and forwards every lifecycle call (`Start`, `StartServerSide`, etc.) to them.
+`src/Loader/Loader.cs` is the **only** `ModSystem` that VS sees. It is compiled as a net8.0 DLL (`deathcorpses.dll`) and acts as a bootstrap: at `StartPre` it detects the runtime version and loads the correct impl assembly (`deathcorpses-net8.bin` or `deathcorpses-net10.bin`). It then discovers all `ModSystem` subclasses in the impl and forwards every lifecycle call (`Start`, `StartServerSide`, etc.) to them.
 
 **Loading strategies** (tried in order):
 1. Embedded manifest resources inside the loader DLL
 2. Fallback: read `.bin` files from the mod's source zip/folder via `Mod.SourcePath` (VS 1.22 strips manifest resources when loading mod DLLs from bytes)
 
 **Important constraints:**
-- `deathcorpses.csproj` must have `<Compile Remove="Loader\**" />` — otherwise the Loader class ends up in the impl assembly and causes infinite recursion.
+- `src/deathcorpses.csproj` must have `<Compile Remove="Loader\**" />` — otherwise the Loader class ends up in the impl assembly and causes infinite recursion.
 - Impl `ModSystem` subclasses must be `internal` to prevent VS from double-instantiating them.
 - Impl systems must use `ModSystemRegistry.Get<T>()` (not `api.ModLoader.GetModSystem<T>()`) to find each other, since VS doesn't know about them.
 
 ### Entry Point
 
-`Core.cs` — `ModSystem` subclass that loads config, registers the `EntityPlayerCorpse` entity and `ItemCorpseCompass` item.
+`src/Core.cs` — `ModSystem` subclass that loads config, registers the `EntityPlayerCorpse` entity and `ItemCorpseCompass` item.
 
 ### Key Systems
 
-- **`Systems/DeathContentManager.cs`** — Server-side `ModSystem` that intercepts `OnEntityDeath()` to spawn a corpse entity, create a map waypoint, and save the death inventory for later recovery. Also suppresses vanilla death waypoints on player join if configured.
-- **`Systems/Commands.cs`** — Registers the `/dc` root command. Subcommand `corpse` (`list|get|remove`) manages saved corpses.
+- **`src/Systems/DeathContentManager.cs`** — Server-side `ModSystem` that intercepts `OnEntityDeath()` to spawn a corpse entity, create a map waypoint, and save the death inventory for later recovery. Also suppresses vanilla death waypoints on player join if configured.
+- **`src/Systems/Commands.cs`** — Registers the `/dc` root command. Subcommand `corpse` (`list|get|remove`) manages saved corpses.
 
 ### Key Entities & Items
 
-- **`Entities/EntityPlayerCorpse.cs`** — Custom `EntityAgent` that holds the dead player's inventory. Tracks owner UID, creation time, and associated waypoint ID. Handles timed-interaction collection and "free corpse" logic (available to anyone after a configurable duration).
-- **`Items/ItemCorpseCompass.cs`** — Held item that scans a 3-block radius for nearby `EntityPlayerCorpse` entities and renders visual HUD indicators via `Lib/UI/HudCircleRenderer.cs`.
+- **`src/Entities/EntityPlayerCorpse.cs`** — Custom `EntityAgent` that holds the dead player's inventory. Tracks owner UID, creation time, and associated waypoint ID. Handles timed-interaction collection and "free corpse" logic (available to anyone after a configurable duration).
+- **`src/Items/ItemCorpseCompass.cs`** — Held item that scans a 3-block radius for nearby `EntityPlayerCorpse` entities and renders visual HUD indicators via `src/Lib/UI/HudCircleRenderer.cs`.
 
 ### Configuration
 
-- **`Config.cs`** — Defines all server-side settings (corpse fire/health, waypoint icon/color/pinning, armor drop behavior, debug mode). Serialized to `ModConfig/deathcorpses.json` in the world save.
-- **`Lib/Config/`** — Generic attribute-driven config manager used to load/save/validate the config.
+- **`src/Config.cs`** — Defines all server-side settings (corpse fire/health, waypoint icon/color/pinning, armor drop behavior, debug mode). Serialized to `ModConfig/deathcorpses.json` in the world save.
+- **`src/Lib/Config/`** — Generic attribute-driven config manager used to load/save/validate the config.
 
 ### Lib Utilities
 
-`Lib/` contains reusable helpers: API extensions (`Lib/Extensions/`), HUD rendering (`Lib/UI/`), and world/color/chat utilities (`Lib/Utils/`). These have no mod-specific logic and can be used across systems.
+`src/Lib/` contains reusable helpers: API extensions (`src/Lib/Extensions/`), HUD rendering (`src/Lib/UI/`), and world/color/chat utilities (`src/Lib/Utils/`). These have no mod-specific logic and can be used across systems.
 
 ### Assets
 
-`assets/` follows Vintage Story's asset layout: entity types, item types, recipes, shapes (JSON), textures, and language files (18 locales under `assets/deathcorpses/lang/`).
+`src/assets/` follows Vintage Story's asset layout: entity types, item types, recipes, shapes (JSON), textures, and language files (18 locales under `src/assets/deathcorpses/lang/`).
 
 ## Self-Maintenance
 
@@ -78,5 +78,5 @@ When the user gives feedback or instructions that sound like they should apply "
 
 A single workflow `.github/workflows/release.yml` handles both release types. It always produces one zip via `nix build .#zip`.
 
-- **Stable release**: push a tag matching the version in `modinfo.json`. Bump the version in `modinfo.json` before tagging.
+- **Stable release**: push a tag matching the version in `src/modinfo.json`. Bump the version in `src/modinfo.json` before tagging.
 - **Pre-release**: trigger manually via `workflow_dispatch`. Version is auto-patched to `{base}-rc.{run_number}`.

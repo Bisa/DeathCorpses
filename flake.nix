@@ -11,11 +11,15 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        modInfo = builtins.fromJSON (builtins.readFile ./modinfo.json);
+        modInfo = builtins.fromJSON (builtins.readFile ./src/modinfo.json);
         modId = modInfo.modid;
         modBaseVersion = modInfo.version;
 
         targetInfo = builtins.fromJSON (builtins.readFile ./targets.json);
+
+        lib = nixpkgs.lib;
+
+        cleanSrc = lib.cleanSource ./src;
 
         # Append git short hash for local dirty builds to distinguish from clean releases.
         nixVersion =
@@ -51,9 +55,9 @@
         loaderDll = pkgs.buildDotnetModule {
           pname = "${modId}-loader";
           version = nixVersion;
-          src = ./.;
+          src = cleanSrc;
           projectFile = "Loader/Loader.csproj";
-          nugetDeps = ./Loader/deps.json;
+          nugetDeps = ./src/Loader/deps.json;
           dotnet-sdk = pkgs.dotnet-sdk_8;
           selfContained = false;
           preBuild = ''
@@ -79,9 +83,9 @@
           pkgs.buildDotnetModule {
             pname = "${modId}-impl-${implSuffix}";
             version = nixVersion;
-            src = ./.;
+            src = cleanSrc;
             projectFile = "${modId}.csproj";
-            nugetDeps = ./deps/${t.targetFramework}.json;
+            nugetDeps = ./src/deps/${t.targetFramework}.json;
             dotnet-sdk = sdkFor t;
             selfContained = false;
             nativeBuildInputs = [ pkgs.jq ];

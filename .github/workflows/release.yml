@@ -43,8 +43,8 @@ jobs:
       - name: Determine version
         id: info
         run: |
-          MODID=$(jq -r .modid modinfo.json)
-          BASE_VERSION=$(jq -r .version modinfo.json)
+          MODID=$(jq -r .modid src/modinfo.json)
+          BASE_VERSION=$(jq -r .version src/modinfo.json)
 
           if [ "$IS_PRERELEASE" = "true" ]; then
             VERSION="${BASE_VERSION}-rc.${{ github.run_number }}"
@@ -52,8 +52,8 @@ jobs:
             VERSION="$BASE_VERSION"
             TAG=${{ github.ref_name }}
             if [ "$VERSION" != "$TAG" ]; then
-              echo "ERROR: modinfo.json version ($VERSION) does not match tag ($TAG)"
-              echo "Bump the version in modinfo.json and commit it before tagging."
+              echo "ERROR: src/modinfo.json version ($VERSION) does not match tag ($TAG)"
+              echo "Bump the version in src/modinfo.json and commit it before tagging."
               exit 1
             fi
           fi
@@ -61,12 +61,12 @@ jobs:
           echo "modid=$MODID" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Patch version into modinfo.json
+      - name: Patch version into src/modinfo.json
         if: env.IS_PRERELEASE == 'true'
         run: |
           VERSION=${{ steps.info.outputs.version }}
-          jq --arg v "$VERSION" '.version = $v' modinfo.json > modinfo.tmp && mv modinfo.tmp modinfo.json
-          git add modinfo.json
+          jq --arg v "$VERSION" '.version = $v' src/modinfo.json > modinfo.tmp && mv modinfo.tmp src/modinfo.json
+          git add src/modinfo.json
           git -c user.name="CI" -c user.email="ci@noreply" commit -m "prerelease $VERSION"
 
       - name: Build mod zip

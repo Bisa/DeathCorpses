@@ -13,7 +13,7 @@ if [ "${1:-}" = "--prerelease" ]; then
   PRERELEASE=true
 fi
 
-VERSION=$(jq -r .version modinfo.json)
+VERSION=$(jq -r .version src/modinfo.json)
 
 # Find the previous stable tag (exclude rc tags)
 prev_stable_for_release() {

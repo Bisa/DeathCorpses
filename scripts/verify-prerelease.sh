@@ -23,7 +23,7 @@ REF="${2:-HEAD}"
 WORK_DIR="/tmp/dc-verify"
 REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 
-BASE_VERSION="$(jq -r .version "$REPO_ROOT/modinfo.json")"
+BASE_VERSION="$(jq -r .version "$REPO_ROOT/src/modinfo.json")"
 VERSION="${BASE_VERSION}-rc.${RUN_NUMBER}"
 
 echo "Reproducing prerelease build: ${VERSION} from ref ${REF}"
@@ -33,9 +33,9 @@ rm -rf "$WORK_DIR"
 git -C "$REPO_ROOT" worktree add "$WORK_DIR" "$REF" --detach 2>/dev/null
 
 # Replicate CI: patch version and commit so nix sees a clean tree
-jq --arg v "$VERSION" '.version = $v' "$WORK_DIR/modinfo.json" > "$WORK_DIR/modinfo.tmp"
-mv "$WORK_DIR/modinfo.tmp" "$WORK_DIR/modinfo.json"
-git -C "$WORK_DIR" add modinfo.json
+jq --arg v "$VERSION" '.version = $v' "$WORK_DIR/src/modinfo.json" > "$WORK_DIR/modinfo.tmp"
+mv "$WORK_DIR/modinfo.tmp" "$WORK_DIR/src/modinfo.json"
+git -C "$WORK_DIR" add src/modinfo.json
 git -C "$WORK_DIR" -c user.name="CI" -c user.email="ci@noreply" -c commit.gpgsign=false commit -m "prerelease $VERSION" --quiet
 
 echo "Building..."
