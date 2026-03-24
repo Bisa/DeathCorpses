@@ -73,6 +73,7 @@ The config file is created at `ModConfig/deathcorpses.json` on first run. All se
 | `CorpseCollectionTime` | `1` | Seconds of right-click hold required to collect the corpse |
 | `CorpseCompassEnabled` | `true` | Enables the Corpse Compass item. Setting to `false` turns existing compasses into unknown items |
 | `DropArmorOnDeath` | `Vanilla` | Controls armor drop behaviour. `Vanilla` = respect the game's own setting, `Armor` = always save armor into the corpse, `ArmorAndCloth` = save armor and clothing |
+| `RemoveCorpseOnGet` | `true` | If true, `/dc corpse get` removes the corpse entity and save file after restoring the inventory |
 | `DebugMode` | `false` | Broadcasts internal corpse creation/collection messages to all players |
 
 ---

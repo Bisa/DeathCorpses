@@ -474,6 +474,7 @@ namespace DeathCorpses.Systems
                 return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
             }
 
+            string filePath = files[id];
             var dcm = ModSystemRegistry.Get<DeathContentManager>();
             InventoryGeneric inventory = dcm.LoadLastDeathContent(player, id);
             foreach (var slot in inventory)
@@ -489,6 +490,34 @@ namespace DeathCorpses.Systems
                 }
                 slot.Itemstack = null;
                 slot.MarkDirty();
+            }
+
+            if (Core.Config.RemoveCorpseOnGet)
+            {
+                string? corpseId = _deathContentManager.LoadCorpseId(filePath);
+                EntityPlayerCorpse? corpseEntity = corpseId != null ? FindCorpseEntity(corpseId) : null;
+
+                if (corpseEntity != null)
+                {
+                    DespawnCorpseEntity(corpseEntity);
+                }
+                else
+                {
+                    BlockPos? pos = _deathContentManager.LoadCorpsePosition(filePath);
+                    if (pos != null)
+                    {
+                        LoadChunkThen(pos, () =>
+                        {
+                            EntityPlayerCorpse? loadedCorpse = corpseId != null ? FindCorpseEntity(corpseId) : null;
+                            if (loadedCorpse != null)
+                            {
+                                DespawnCorpseEntity(loadedCorpse);
+                            }
+                        });
+                    }
+                }
+
+                File.Delete(filePath);
             }
 
             return TextCommandResult.Success(Lang.Get(

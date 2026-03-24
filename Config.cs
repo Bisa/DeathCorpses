@@ -61,5 +61,8 @@ namespace DeathCorpses
         [Description("Override vanilla keep inventory system, so you can drop armor and clothing into the corpse")]
         public DropArmorMode DropArmorOnDeath { get; set; } = DropArmorMode.Vanilla;
         public enum DropArmorMode { Vanilla, Armor, ArmorAndCloth };
+
+        [Description("If true, '/dc corpse get' will remove the corpse entity and save file after restoring the inventory")]
+        public bool RemoveCorpseOnGet { get; set; } = true;
     }
 }
