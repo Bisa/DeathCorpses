@@ -5,6 +5,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <PropertyGroup>

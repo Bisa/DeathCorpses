@@ -138,6 +138,19 @@ sha256sum ./result
 
 If both hashes match, the artifact on GitHub is exactly what was built from that commit — nothing was added, removed, or tampered with.
 
+### Verifying prereleases
+
+Prereleases (`-rc.N` versions) patch `modinfo.json` before building, so a plain `nix build` won't reproduce them. Use the included script to replicate the CI steps:
+
+```sh
+# Verify prerelease 2.1.0-rc.15 built from the main branch
+./scripts/verify-prerelease.sh 15 main
+
+# Then compare with the release artifact
+gh release download 2.1.0-rc.15 --pattern '*.zip' --dir /tmp
+sha256sum /tmp/deathcorpses-2.1.0-rc.15.zip
+```
+
 ---
 
 ## Versioning

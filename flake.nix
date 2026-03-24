@@ -129,6 +129,7 @@
             cp ${implNet10}/${modId}-net10.dll  staging/${modId}-net10.bin
 
             cd staging
+            find . -exec touch -t 198001010000.00 {} +
             find . | sort | zip -X -@ $out
           '';
 
