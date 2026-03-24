@@ -18,7 +18,7 @@ using Vintagestory.GameContent;
 
 namespace DeathCorpses.Systems
 {
-    public class DeathContentManager : ModSystem
+    internal class DeathContentManager : ModSystem
     {
         //private static readonly MethodInfo _resendWaypointsMethod = AccessTools.Method(typeof(WaypointMapLayer), "ResendWaypoints");
         //private static readonly MethodInfo _rebuildMapComponentsMethod = AccessTools.Method(typeof(WaypointMapLayer), "RebuildMapComponents");

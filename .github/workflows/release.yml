@@ -32,8 +32,6 @@ jobs:
         run: |
           MODID=$(jq -r .modid modinfo.json)
           BASE_VERSION=$(jq -r .version modinfo.json)
-          VS_NET10=$(jq -r .net10.gameVersion targets.json)
-          VS_NET8=$(jq -r .net8.gameVersion targets.json)
 
           if [ "$IS_PRERELEASE" = "true" ]; then
             VERSION="${BASE_VERSION}-rc.${{ github.run_number }}"
@@ -49,8 +47,6 @@ jobs:
 
           echo "modid=$MODID" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "vs_net10=$VS_NET10" >> $GITHUB_OUTPUT
-          echo "vs_net8=$VS_NET8" >> $GITHUB_OUTPUT
 
       - name: Patch version into modinfo.json
         if: env.IS_PRERELEASE == 'true'
@@ -60,18 +56,13 @@ jobs:
           git add modinfo.json
           git -c user.name="CI" -c user.email="ci@noreply" commit -m "prerelease $VERSION"
 
-      - name: Build mod zips
+      - name: Build mod zip
         run: |
           MODID=${{ steps.info.outputs.modid }}
           VERSION=${{ steps.info.outputs.version }}
-          VS_NET10=${{ steps.info.outputs.vs_net10 }}
-          VS_NET8=${{ steps.info.outputs.vs_net8 }}
 
-          nix build .#zip-net10
-          cp result "${MODID}-vs${VS_NET10}_${VERSION}.zip"
-
-          nix build .#zip-net8
-          cp result "${MODID}-vs${VS_NET8}_${VERSION}.zip"
+          nix build .#zip
+          cp result "${MODID}_${VERSION}.zip"
 
       - name: Create release
         env:
@@ -79,8 +70,6 @@ jobs:
         run: |
           MODID=${{ steps.info.outputs.modid }}
           VERSION=${{ steps.info.outputs.version }}
-          VS_NET10=${{ steps.info.outputs.vs_net10 }}
-          VS_NET8=${{ steps.info.outputs.vs_net8 }}
 
           PRERELEASE_FLAGS=""
           if [ "$IS_PRERELEASE" = "true" ]; then
@@ -92,25 +81,18 @@ jobs:
             $PRERELEASE_FLAGS \
             --title "${VERSION}" \
             --generate-notes \
-            "${MODID}-vs${VS_NET10}_${VERSION}.zip" \
-            "${MODID}-vs${VS_NET8}_${VERSION}.zip"
+            "${MODID}_${VERSION}.zip"
           gh release edit "${VERSION}" --draft=false
 
       - name: Summary
         run: |
           MODID=${{ steps.info.outputs.modid }}
           VERSION=${{ steps.info.outputs.version }}
-          VS_NET10=${{ steps.info.outputs.vs_net10 }}
-          VS_NET8=${{ steps.info.outputs.vs_net8 }}
           REPO=${{ github.repository }}
 
           echo "## Publish to mod portal" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The mod DB upload API is not yet implemented. Upload manually:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| VS Version | Download |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ${VS_NET10}+ | [\`${MODID}-vs${VS_NET10}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}-vs${VS_NET10}_${VERSION}.zip) |" >> $GITHUB_STEP_SUMMARY
-          echo "| ${VS_NET8}+ | [\`${MODID}-vs${VS_NET8}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}-vs${VS_NET8}_${VERSION}.zip) |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download: [\`${MODID}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}_${VERSION}.zip)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY

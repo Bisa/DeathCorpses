@@ -81,7 +81,7 @@ namespace DeathCorpses.Entities
         {
             base.Initialize(properties, api, InChunkIndex3d);
 
-            _modLogger = api.ModLoader.GetModSystem<Core>().Mod.Logger;
+            _modLogger = ModSystemRegistry.Get<Core>().Mod.Logger;
 
             if (api is ICoreClientAPI capi)
             {

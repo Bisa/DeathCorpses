@@ -1,3 +1,4 @@
+using DeathCorpses;
 using DeathCorpses.Entities;
 using DeathCorpses.Lib.Config;
 using DeathCorpses.Lib.Extensions;
@@ -15,7 +16,7 @@ using Vintagestory.API.Util;
 
 namespace DeathCorpses.Systems
 {
-    public class Commands : ModSystem
+    internal class Commands : ModSystem
     {
         private ICoreServerAPI _sapi = null!;
         private DeathContentManager _deathContentManager = null!;
@@ -24,8 +25,8 @@ namespace DeathCorpses.Systems
         public override void StartServerSide(ICoreServerAPI api)
         {
             _sapi = api;
-            _deathContentManager = api.ModLoader.GetModSystem<DeathContentManager>();
-            _configManager = api.ModLoader.GetModSystem<ConfigManager>();
+            _deathContentManager = ModSystemRegistry.Get<DeathContentManager>();
+            _configManager = ModSystemRegistry.Get<ConfigManager>();
 
             var parsers = api.ChatCommands.Parsers;
             api.ChatCommands
@@ -207,7 +208,7 @@ namespace DeathCorpses.Systems
                 return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
             }
 
-            var dcm = _sapi.ModLoader.GetModSystem<DeathContentManager>();
+            var dcm = ModSystemRegistry.Get<DeathContentManager>();
             InventoryGeneric inventory = dcm.LoadLastDeathContent(player, id);
             foreach (var slot in inventory)
             {

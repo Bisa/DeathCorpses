@@ -12,7 +12,7 @@ using Vintagestory.API.Server;
 
 namespace DeathCorpses.Lib.Config
 {
-    public class ConfigManager : ModSystem
+    internal class ConfigManager : ModSystem
     {
         private const string ChannelName = "deathcorpses-config-manager";
 
@@ -21,7 +21,7 @@ namespace DeathCorpses.Lib.Config
 
         private IServerNetworkChannel? _serverChannel;
         private ICoreAPI _api = null!;
-        private List<(ConfigAttribute Config, int LoadedVersion)> _versionMismatch = null!;
+        private List<(ConfigAttribute Config, int LoadedVersion)> _versionMismatch = [];
 
         public Dictionary<Type, object> Configs { get; } = [];
 
@@ -41,7 +41,7 @@ namespace DeathCorpses.Lib.Config
 
             api.Event.PlayerNowPlaying += byPlayer =>
             {
-                if (byPlayer.Privileges.Contains(Privilege.controlserver))
+                if (byPlayer.Privileges != null && byPlayer.Privileges.Contains(Privilege.controlserver))
                 {
                     if (_serverStartConfigErrors.Count > 0)
                     {
@@ -100,7 +100,10 @@ namespace DeathCorpses.Lib.Config
             versionMismatch = [];
             foreach (Type type in GetAllTypesWithAttribute<ConfigAttribute>())
             {
-                if (!_api.ModLoader.IsModEnabled(type.Assembly))
+                // Only skip if VS explicitly knows this mod AND it is disabled.
+                // Dynamically loaded impl assemblies are unknown to VS (GetMod returns null) — allow them through.
+                var owningMod = _api.ModLoader.GetMod(type.Assembly);
+                if (owningMod != null && !_api.ModLoader.IsModEnabled(type.Assembly))
                 {
                     Mod.Logger.Notification($"Config {FormatAssembly(type)} skipped (mod is not enabled)");
                     continue;
@@ -211,8 +214,9 @@ namespace DeathCorpses.Lib.Config
             {
                 ConfigUtil.ValidateConfig(_api, type, ref config, Mod.Logger);
                 ConfigUtil.SaveConfig(_api, type, config);
+                // For dynamically loaded impl assemblies VS returns null — treat as Universal so config is synced.
                 Mod? mod = _api.ModLoader.GetMod(type.Assembly);
-                if (mod?.Info.Side == EnumAppSide.Universal)
+                if (mod == null || mod.Info.Side == EnumAppSide.Universal)
                 {
                     _serverChannel?.BroadcastPacket(new SyncConfigPacket()
                     {

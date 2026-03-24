@@ -16,7 +16,9 @@ Forked from the adapted [PlayerGrave](https://mods.vintagestory.at/show/mod/3944
 
 ## Requirements
 
-- Vintage Story `>= 1.22.0` or `>= 1.21.6` ()
+- Vintage Story `>= 1.21.6` (.NET 8) or `>= 1.22.0` (.NET 10)
+
+A single zip works on both versions — the mod auto-detects the runtime at startup.
 
 ---
 
@@ -79,35 +81,28 @@ This repo uses [Nix flakes](https://nixos.wiki/wiki/Flakes) for fully reproducib
 
 - Nix with flakes enabled. If you don't have it: [install Nix](https://nixos.org/download) then add `experimental-features = nix-command flakes` to `~/.config/nix/nix.conf`.
 
-### Build targets
-
-The mod is built for multiple Vintage Story versions, defined in `targets.json`:
-
-| Target | VS Version | .NET |
-|--------|------------|------|
-| `net10` (default) | 1.22.0+ | .NET 10 |
-| `net8` | 1.21.6+ | .NET 8 |
-
 ### Build the mod zip
 
 ```sh
-# Default (net10) build
 nix build .#zip
-
-# Explicit targets
-nix build .#zip-net10
-nix build .#zip-net8
 ```
+
+The zip contains a single `deathcorpses.dll` that embeds two compiled variants:
+
+- `deathcorpses-net8.bin` — impl compiled against VS 1.21.6 (.NET 8)
+- `deathcorpses-net10.bin` — impl compiled against VS 1.22.0 (.NET 10)
+
+At startup the loader checks `Environment.Version.Major` and loads the matching variant from its own manifest resources. This avoids the `MissingFieldException` caused by `Entity.Pos` changing from a field in VS 1.21 to a property in VS 1.22, while keeping a single zip for all supported versions.
 
 The resulting zip is at `./result` and is ready to drop into your `Mods/` folder or upload to the mod portal.
 
-### Updating the (NuGet) Nix package lockfile
+### Updating the (NuGet) Nix package lockfiles
 
-`deps/` contains per-target NuGet lockfiles. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, regenerate them:
+`deps/net8.0.json` and `deps/net10.0.json` pin the NuGet packages fetched during each impl build. If you add, remove, or version-bump a `<PackageReference>` in the `.csproj`, regenerate both:
 
 ```sh
-nix build .#fetch-deps      && ./result ./deps/net10.0.json
-nix build .#fetch-deps-net8 && ./result ./deps/net8.0.json
+nix build .#fetch-deps-net8  && ./result ./deps/net8.0.json
+nix build .#fetch-deps-net10 && ./result ./deps/net10.0.json
 ```
 
 ---
@@ -132,7 +127,7 @@ sha256sum deathcorpses-vs<vintagestory version>_<version>.zip
 git clone https://github.com/Bisa/DeathCorpses
 cd DeathCorpses
 git checkout <version>
-nix build .#zip-net10  # or .#zip-net8
+nix build .#zip
 sha256sum ./result
 ```
 
@@ -163,7 +158,7 @@ Local dirty builds automatically append a short commit hash (e.g. `1.0.0+abc1234
 3. Tag: `git tag 1.0.1`
 4. Push: `git push origin main 1.0.1`
 
-CI will build both zips (net10 and net8) and publish a GitHub release automatically. The build will fail if the tag does not match the version in `modinfo.json`.
+CI will build the zip and publish a GitHub release automatically. The build will fail if the tag does not match the version in `modinfo.json`.
 
 ### Release candidates
 

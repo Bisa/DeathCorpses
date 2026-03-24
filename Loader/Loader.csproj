@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>deathcorpses</AssemblyName>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>CS1591</NoWarn>
+    <OutputPath>..\bin\deathcorpses\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Impl assemblies are copied here by Nix preBuild before dotnet build runs.
+      They are NOT git-tracked; local dotnet build is unsupported (use nix build).
+    -->
+    <EmbeddedResource Include="deathcorpses-net8.impl"  LogicalName="deathcorpses-net8.bin" />
+    <EmbeddedResource Include="deathcorpses-net10.impl" LogicalName="deathcorpses-net10.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="VintagestoryAPI">
+      <HintPath>$(VintageStoryInstallDir)\VintagestoryAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="echo VintageStoryInstallDir=$(VintageStoryInstallDir)" />
+  </Target>
+</Project>

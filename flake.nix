@@ -17,106 +17,125 @@
 
         targetInfo = builtins.fromJSON (builtins.readFile ./targets.json);
 
-        # nixVersion: informational, used for nix store paths and zip filenames.
-        # modinfo.json gets a per-target version with -vs<short> suffix (set in mkMod).
+        # Append git short hash for local dirty builds to distinguish from clean releases.
         nixVersion =
           if self ? dirtyShortRev then "${modBaseVersion}+${self.dirtyShortRev}"
           else modBaseVersion;
 
-        # Map target info from targets.json into full build definitions.
-        # The dotnet SDK is the only thing that must stay in Nix (attribute reference).
-        dotnetSdks = {
-          "net10.0" = pkgs.dotnet-sdk_10;
-          "net8.0" = pkgs.dotnet-sdk_8;
-        };
+        # .NET SDK for a given target
+        sdkFor = t:
+          if t.targetFramework == "net10.0" then pkgs.dotnet-sdk_10
+          else pkgs.dotnet-sdk_8;
 
-        mkTarget = name: info: info // {
-          dotnetSdk = dotnetSdks.${info.targetFramework};
-          vsSrc = pkgs.fetchurl {
-            url = "https://cdn.vintagestory.at/gamefiles/${info.channel}/vs_server_linux-x64_${info.gameVersion}.tar.gz";
-            hash = info.hash;
-          };
-        };
-
-        targets = builtins.mapAttrs mkTarget targetInfo;
-
-        mkVsLibs = target: pkgs.runCommand "vintage-story-libs-${target.gameVersion}" { } ''
+        # Extract only the VS DLLs needed to compile against a given VS version
+        vsLibsFor = t: pkgs.runCommand "vintage-story-libs-${t.gameVersion}" { } ''
           mkdir -p $out/Lib
           cd $out
-          tar -xzf ${target.vsSrc} --wildcards \
+          tar -xzf ${pkgs.fetchurl {
+            url = "https://cdn.vintagestory.at/gamefiles/${t.channel}/vs_server_linux-x64_${t.gameVersion}.tar.gz";
+            hash = t.hash;
+          }} --wildcards \
             'VintagestoryAPI.dll' \
             'VintagestoryLib.dll' \
             'Lib/Newtonsoft.Json.dll' \
             'Lib/protobuf-net.dll'
         '';
 
-        mkMod = target:
-          let vsLibs = mkVsLibs target; in
+        net8 = targetInfo.net8;
+        net10 = targetInfo.net10;
+
+        vsLibsNet8 = vsLibsFor net8;
+
+        # Thin loader DLL (net8): the only ModSystem VS sees. Impl assemblies are embedded as
+        # manifest resources so the loader never needs Assembly.Location or the file system.
+        loaderDll = pkgs.buildDotnetModule {
+          pname = "${modId}-loader";
+          version = nixVersion;
+          src = ./.;
+          projectFile = "Loader/Loader.csproj";
+          nugetDeps = ./Loader/deps.json;
+          dotnet-sdk = pkgs.dotnet-sdk_8;
+          selfContained = false;
+          preBuild = ''
+            export VintageStoryInstallDir="${vsLibsNet8}"
+            # Stage impl assemblies as .impl files for EmbeddedResource pickup by dotnet build
+            cp ${implNet8}/${modId}-net8.dll   Loader/${modId}-net8.impl
+            cp ${implNet10}/${modId}-net10.dll  Loader/${modId}-net10.impl
+          '';
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out
+            cp bin/${modId}/linux-x64/${modId}.dll $out/
+            runHook postInstall
+          '';
+        };
+
+        # Impl DLL compiled against a specific VS/dotnet target
+        mkImpl = targetKey: implSuffix:
+          let
+            t = targetInfo.${targetKey};
+            vsLibs = vsLibsFor t;
+          in
           pkgs.buildDotnetModule {
-            pname = "${modId}-${target.targetFramework}";
-            version = nixVersion;  # nix store path only; modinfo.json is patched separately in preBuild
+            pname = "${modId}-impl-${implSuffix}";
+            version = nixVersion;
             src = ./.;
-
             projectFile = "${modId}.csproj";
-            nugetDeps = ./deps/${target.targetFramework}.json;
-
-            dotnet-sdk = target.dotnetSdk;
+            nugetDeps = ./deps/${t.targetFramework}.json;
+            dotnet-sdk = sdkFor t;
             selfContained = false;
-
-            # Patch target framework early so dotnet restore sees the right TFM.
+            nativeBuildInputs = [ pkgs.jq ];
+            dotnetBuildFlags = [ "/p:AssemblyName=${modId}-${implSuffix}" ];
             postPatch = ''
               substituteInPlace ${modId}.csproj \
-                --replace-warn '<TargetFramework>net10.0</TargetFramework>' '<TargetFramework>${target.targetFramework}</TargetFramework>'
+                --replace-fail 'net8.0' '${t.targetFramework}'
             '';
-
-            nativeBuildInputs = [ pkgs.jq ];
-
             preBuild = ''
               export VintageStoryInstallDir="${vsLibs}"
-              jq '.dependencies.game = "${target.gameVersion}"' \
+              jq '.dependencies.game = "${t.gameVersion}"' \
                 modinfo.json > modinfo.tmp && mv modinfo.tmp modinfo.json
             '';
-
             installPhase = ''
               runHook preInstall
               mkdir -p $out
-              # dotnet publish puts managed output under a RID subdir (linux-x64);
-              # flatten it so modinfo.json and the DLL sit at $out root.
               cp -r bin/${modId}/linux-x64/. $out/
               runHook postInstall
             '';
-
-            meta = {
-              description = "Vintage Story mod: persistent corpses with automatic waypoints";
-              homepage = "https://mods.vintagestory.at/deathcorpses";
-              license = pkgs.lib.licenses.mit;
-            };
           };
 
-        mkZip = target:
-          let mod = mkMod target; in
-          pkgs.runCommand "${modId}-vs${target.gameVersion}_${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
-            cd ${mod}
-            find . | sort | zip -X -@ $out
-          '';
+        implNet8 = mkImpl "net8" "net8";
+        implNet10 = mkImpl "net10" "net10";
 
       in
       {
-        # Default targets (net10)
-        packages.default = mkMod targets.net10;
-        packages.zip = mkZip targets.net10;
+        # Build the single combined zip (default target)
+        packages.default = self.packages.${system}.zip;
 
-        # Explicit per-target outputs
-        packages.net10 = mkMod targets.net10;
-        packages.net8 = mkMod targets.net8;
-        packages.zip-net10 = mkZip targets.net10;
-        packages.zip-net8 = mkZip targets.net8;
+        packages.zip =
+          pkgs.runCommand "${modId}_${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
+            mkdir -p staging
 
-        # Expose fetch-deps for updating NuGet lockfiles.
-        # Usage: nix build .#fetch-deps && ./result ./deps/net10.0.json
-        #        nix build .#fetch-deps-net8 && ./result ./deps/net8.0.json
-        packages.fetch-deps = self.packages.${system}.default.passthru.fetch-deps;
-        packages.fetch-deps-net8 = self.packages.${system}.net8.passthru.fetch-deps;
+            # Static assets, modinfo (patched for minimum VS version), icon — from net8 impl
+            cp -r ${implNet8}/. staging/
+            # Remove build artefacts; impl assemblies are loaded by the loader at runtime
+            rm -f staging/*.dll staging/*.deps.json staging/*.pdb staging/*.runtimeconfig.json
+
+            # Loader DLL (contains embedded net8 + net10 impl assemblies)
+            cp ${loaderDll}/${modId}.dll staging/
+
+            # Standalone impl binaries as fallback — some VS versions strip manifest
+            # resources when loading mod DLLs from bytes
+            cp ${implNet8}/${modId}-net8.dll   staging/${modId}-net8.bin
+            cp ${implNet10}/${modId}-net10.dll  staging/${modId}-net10.bin
+
+            cd staging
+            find . | sort | zip -X -@ $out
+          '';
+
+        # Usage: nix build .#fetch-deps-net8 && ./result ./deps/net8.0.json
+        packages.fetch-deps-net8 = implNet8.passthru.fetch-deps;
+        # Usage: nix build .#fetch-deps-net10 && ./result ./deps/net10.0.json
+        packages.fetch-deps-net10 = implNet10.passthru.fetch-deps;
       }
     );
 }

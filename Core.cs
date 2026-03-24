@@ -5,13 +5,13 @@ using Vintagestory.API.Common;
 
 namespace DeathCorpses
 {
-    public class Core : ModSystem
+    internal class Core : ModSystem
     {
         public static Config Config { get; private set; } = null!;
 
         public override void Start(ICoreAPI api)
         {
-            var configs = api.ModLoader.GetModSystem<ConfigManager>();
+            var configs = ModSystemRegistry.Get<ConfigManager>();
             Config = configs.GetConfig<Config>();
 
             api.World.Config.SetBool($"{Mod.Info.ModID}:CorpseCompassEnabled", Config.CorpseCompassEnabled);

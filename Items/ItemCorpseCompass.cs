@@ -48,7 +48,7 @@ namespace DeathCorpses.Items
         public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
-            _modLogger = api.ModLoader.GetModSystem<Core>().Mod.Logger;
+            _modLogger = ModSystemRegistry.Get<Core>().Mod.Logger;
         }
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
