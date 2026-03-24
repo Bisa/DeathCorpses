@@ -45,6 +45,8 @@ All commands require the privilege configured in `CommandPrivilege` (default: `g
 | `/dc corpse remove <player> [id]` | Removes corpses for a player. If `id` is given, only that saved corpse is removed. Without `id`, deletes all saved corpses and despawns any corpse entities in the world |
 | `/dc corpse tp <player> [id]` | Teleports you to a player's corpse. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc corpse tpother <target player> <corpse owner> [id]` | Teleports another player to a corpse. `id` is the index from `list` (default: `0`, most recent) |
+| `/dc corpse fetch <player> [id]` | Moves a player's corpse entity to your current position. `id` is the index from `list` (default: `0`, most recent) |
+| `/dc corpse fetchto <player> <x> <y> <z> [id]` | Moves a player's corpse entity to the specified coordinates. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc config list` | Shows all config options and their current values |
 | `/dc config get <option>` | Shows the current value of a specific config option |
 | `/dc config set <option> <value>` | Changes a config option at runtime and saves it to disk |

@@ -75,7 +75,20 @@ namespace DeathCorpses.Entities
             }
         }
 
-        public Guid CorpseId { get; set; } = Guid.NewGuid();
+        public string CorpseId
+        {
+            get
+            {
+                string id = WatchedAttributes.GetString("corpseId");
+                if (id == null)
+                {
+                    id = Guid.NewGuid().ToString();
+                    WatchedAttributes.SetString("corpseId", id);
+                }
+                return id;
+            }
+            set { WatchedAttributes.SetString("corpseId", value); }
+        }
 
         public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
         {

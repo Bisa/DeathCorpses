@@ -65,6 +65,21 @@ namespace DeathCorpses.Systems
                             parsers.OptionalInt("id", 0))
                         .HandleWith(TeleportOtherToCorpse)
                     .EndSubCommand()
+                    .BeginSubCommand("fetch")
+                        .WithArgs(
+                            parsers.Player("player", api),
+                            parsers.OptionalInt("id", 0))
+                        .HandleWith(FetchCorpse)
+                    .EndSubCommand()
+                    .BeginSubCommand("fetchto")
+                        .WithArgs(
+                            parsers.Player("player", api),
+                            parsers.Int("x"),
+                            parsers.Int("y"),
+                            parsers.Int("z"),
+                            parsers.OptionalInt("id", 0))
+                        .HandleWith(FetchCorpseToCoords)
+                    .EndSubCommand()
                 .EndSubCommand()
                 .BeginSubCommand("config")
                     .WithDescription("View or change config settings")
@@ -81,6 +96,60 @@ namespace DeathCorpses.Systems
                     .EndSubCommand()
                 .EndSubCommand();
         }
+
+        // --- Coordinate helpers ---
+
+        private (int x, int y, int z) AbsToRelative(Vec3d abs)
+        {
+            var spawn = _sapi.World.DefaultSpawnPosition;
+            return ((int)abs.X - (int)spawn.X, (int)abs.Y, (int)abs.Z - (int)spawn.Z);
+        }
+
+        private (int x, int y, int z) AbsToRelative(BlockPos abs)
+        {
+            var spawn = _sapi.World.DefaultSpawnPosition;
+            return (abs.X - (int)spawn.X, abs.Y, abs.Z - (int)spawn.Z);
+        }
+
+        private Vec3d RelativeToAbs(int x, int y, int z)
+        {
+            var spawn = _sapi.World.DefaultSpawnPosition;
+            return new Vec3d(x + spawn.X + 0.5, y, z + spawn.Z + 0.5);
+        }
+
+        // --- Corpse entity lookup ---
+
+        private EntityPlayerCorpse? FindCorpseEntity(string corpseId)
+        {
+            foreach (var entity in _sapi.World.LoadedEntities.Values)
+            {
+                if (entity is EntityPlayerCorpse corpse && corpse.CorpseId == corpseId)
+                {
+                    return corpse;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Loads the chunk at the given position, waits for entities to register,
+        /// then invokes the callback.
+        /// </summary>
+        private void LoadChunkThen(BlockPos pos, Action callback)
+        {
+            int chunkX = pos.X / _sapi.World.BlockAccessor.ChunkSize;
+            int chunkZ = pos.Z / _sapi.World.BlockAccessor.ChunkSize;
+
+            _sapi.WorldManager.LoadChunkColumnPriority(chunkX, chunkZ, new ChunkLoadOptions
+            {
+                OnLoaded = () =>
+                {
+                    _sapi.Event.RegisterCallback((dt) => callback(), 500);
+                }
+            });
+        }
+
+        // --- Corpse list ---
 
         private TextCommandResult ShowDeathList(TextCommandCallingArgs args)
         {
@@ -99,6 +168,8 @@ namespace DeathCorpses.Systems
             }
             return TextCommandResult.Success(sb.ToString());
         }
+
+        // --- Corpse removal ---
 
         private void DespawnCorpseEntity(EntityPlayerCorpse corpse)
         {
@@ -125,17 +196,6 @@ namespace DeathCorpses.Systems
             }
         }
 
-        private void LoadChunkAndDespawnCorpse(string playerUid, BlockPos pos)
-        {
-            int chunkX = pos.X / _sapi.World.BlockAccessor.ChunkSize;
-            int chunkZ = pos.Z / _sapi.World.BlockAccessor.ChunkSize;
-
-            _sapi.WorldManager.LoadChunkColumnPriority(chunkX, chunkZ, new ChunkLoadOptions
-            {
-                OnLoaded = () => DespawnCorpsesInLoadedEntities(playerUid)
-            });
-        }
-
         private TextCommandResult RemoveDeathContent(TextCommandCallingArgs args)
         {
             IPlayer player = (IPlayer)args[0];
@@ -157,7 +217,7 @@ namespace DeathCorpses.Systems
                 BlockPos? pos = _deathContentManager.LoadCorpsePosition(files[id]);
                 if (pos != null)
                 {
-                    LoadChunkAndDespawnCorpse(player.PlayerUID, pos);
+                    LoadChunkThen(pos, () => DespawnCorpsesInLoadedEntities(player.PlayerUID));
                 }
 
                 File.Delete(files[id]);
@@ -202,6 +262,19 @@ namespace DeathCorpses.Systems
                 fileCount, player.PlayerName));
         }
 
+        // --- Teleport to corpse ---
+
+        private void TeleportPlayerToCorpseEntity(IServerPlayer targetPlayer, EntityPlayerCorpse corpse, IPlayer corpseOwner, int id)
+        {
+            Vec3d teleportPos = corpse.ServerPos.XYZ;
+            targetPlayer.Entity.TeleportTo(teleportPos);
+            var (rx, ry, rz) = AbsToRelative(teleportPos);
+            targetPlayer.SendMessage(0, Lang.Get(
+                "Teleported {0} to corpse {1} of {2} at {3}, {4}, {5}",
+                targetPlayer.PlayerName, id, corpseOwner.PlayerName,
+                rx, ry, rz), EnumChatType.CommandSuccess);
+        }
+
         private TextCommandResult TeleportPlayerToCorpse(IServerPlayer targetPlayer, IPlayer corpseOwner, int id)
         {
             string[] files = _deathContentManager.GetDeathDataFiles(corpseOwner);
@@ -216,12 +289,6 @@ namespace DeathCorpses.Systems
                 return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
             }
 
-            BlockPos? pos = _deathContentManager.LoadCorpsePosition(files[id]);
-            if (pos == null)
-            {
-                return TextCommandResult.Error(Lang.Get("Corpse {0} has no saved position", id));
-            }
-
             if (!_sapi.World.AllOnlinePlayers.Contains(targetPlayer) || targetPlayer.Entity == null)
             {
                 return TextCommandResult.Error(Lang.Get(
@@ -229,11 +296,46 @@ namespace DeathCorpses.Systems
                     targetPlayer.PlayerName));
             }
 
-            targetPlayer.Entity.TeleportTo(pos.ToVec3d().Add(0.5, 0, 0.5));
+            string filePath = files[id];
+            string? corpseId = _deathContentManager.LoadCorpseId(filePath);
+
+            // Try to find the entity already loaded
+            EntityPlayerCorpse? corpseEntity = corpseId != null ? FindCorpseEntity(corpseId) : null;
+            if (corpseEntity != null)
+            {
+                TeleportPlayerToCorpseEntity(targetPlayer, corpseEntity, corpseOwner, id);
+                return TextCommandResult.Success();
+            }
+
+            // Entity not loaded — load the chunk, then teleport to live entity position
+            BlockPos? pos = _deathContentManager.LoadCorpsePosition(filePath);
+            if (pos == null)
+            {
+                return TextCommandResult.Error(Lang.Get("Corpse {0} has no saved position", id));
+            }
+
+            LoadChunkThen(pos, () =>
+            {
+                EntityPlayerCorpse? loadedCorpse = corpseId != null ? FindCorpseEntity(corpseId) : null;
+                if (loadedCorpse != null)
+                {
+                    TeleportPlayerToCorpseEntity(targetPlayer, loadedCorpse, corpseOwner, id);
+                }
+                else
+                {
+                    // Last resort: use saved position
+                    targetPlayer.Entity.TeleportTo(pos.ToVec3d().Add(0.5, 0, 0.5));
+                    var (rx, ry, rz) = AbsToRelative(pos);
+                    targetPlayer.SendMessage(0, Lang.Get(
+                        "Teleported {0} to corpse {1} of {2} at {3}, {4}, {5} (saved position)",
+                        targetPlayer.PlayerName, id, corpseOwner.PlayerName,
+                        rx, ry, rz), EnumChatType.CommandSuccess);
+                }
+            });
 
             return TextCommandResult.Success(Lang.Get(
-                "Teleported {0} to corpse {1} of {2} at {3}, {4}, {5}",
-                targetPlayer.PlayerName, id, corpseOwner.PlayerName, pos.X, pos.Y, pos.Z));
+                "Teleporting {0} to corpse {1} of {2}",
+                targetPlayer.PlayerName, id, corpseOwner.PlayerName));
         }
 
         private TextCommandResult TeleportToCorpse(TextCommandCallingArgs args)
@@ -258,6 +360,100 @@ namespace DeathCorpses.Systems
 
             return TeleportPlayerToCorpse(targetPlayer, corpseOwner, id);
         }
+
+        // --- Fetch corpse ---
+
+        private TextCommandResult FetchCorpseToPosition(IPlayer corpseOwner, int id, Vec3d targetPos, IServerPlayer? caller)
+        {
+            string[] files = _deathContentManager.GetDeathDataFiles(corpseOwner);
+
+            if (files.Length == 0)
+            {
+                return TextCommandResult.Error(Lang.Get("No saved corpses found"));
+            }
+
+            if (id < 0 || id >= files.Length)
+            {
+                return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
+            }
+
+            string filePath = files[id];
+            string? corpseId = _deathContentManager.LoadCorpseId(filePath);
+            if (corpseId == null)
+            {
+                BlockPos? lastPos = _deathContentManager.LoadCorpsePosition(filePath);
+                string posInfo = "";
+                if (lastPos != null)
+                {
+                    var (rx, ry, rz) = AbsToRelative(lastPos);
+                    posInfo = Lang.Get(" Last seen at {0}, {1}, {2}", rx, ry, rz);
+                }
+                return TextCommandResult.Error(Lang.Get("Could not locate corpse {0}.{1}", id, posInfo));
+            }
+
+            // Try to find and teleport the corpse in already-loaded entities first
+            EntityPlayerCorpse? corpseEntity = FindCorpseEntity(corpseId);
+            if (corpseEntity != null)
+            {
+                corpseEntity.TeleportTo(targetPos);
+                _deathContentManager.UpdateCorpsePosition(filePath, targetPos);
+                var (rx, ry, rz) = AbsToRelative(targetPos);
+                return TextCommandResult.Success(Lang.Get(
+                    "Fetching corpse {0} of {1} to {2}, {3}, {4}",
+                    id, corpseOwner.PlayerName, rx, ry, rz));
+            }
+
+            // Corpse not in a loaded chunk — load the chunk using saved position and retry
+            BlockPos? pos = _deathContentManager.LoadCorpsePosition(filePath);
+            if (pos == null)
+            {
+                return TextCommandResult.Error(Lang.Get("Corpse {0} has no saved position", id));
+            }
+
+            LoadChunkThen(pos, () =>
+            {
+                EntityPlayerCorpse? loadedCorpse = FindCorpseEntity(corpseId);
+                if (loadedCorpse != null)
+                {
+                    loadedCorpse.TeleportTo(targetPos);
+                    _deathContentManager.UpdateCorpsePosition(filePath, targetPos);
+                }
+            });
+
+            var (frx, fry, frz) = AbsToRelative(targetPos);
+            return TextCommandResult.Success(Lang.Get(
+                "Fetching corpse {0} of {1} to {2}, {3}, {4}",
+                id, corpseOwner.PlayerName, frx, fry, frz));
+        }
+
+        private TextCommandResult FetchCorpse(TextCommandCallingArgs args)
+        {
+            IPlayer player = (IPlayer)args[0];
+            int id = (int)args[1];
+
+            var caller = args.Caller.Player as IServerPlayer;
+            if (caller == null)
+            {
+                return TextCommandResult.Error(Lang.Get("You must be in-game to fetch a corpse"));
+            }
+
+            return FetchCorpseToPosition(player, id, caller.Entity.ServerPos.XYZ, caller);
+        }
+
+        private TextCommandResult FetchCorpseToCoords(TextCommandCallingArgs args)
+        {
+            IPlayer player = (IPlayer)args[0];
+            int x = (int)args[1];
+            int y = (int)args[2];
+            int z = (int)args[3];
+            int id = (int)args[4];
+
+            var caller = args.Caller.Player as IServerPlayer;
+
+            return FetchCorpseToPosition(player, id, RelativeToAbs(x, y, z), caller);
+        }
+
+        // --- Inventory return ---
 
         private TextCommandResult ReturnThings(TextCommandCallingArgs args)
         {
@@ -299,6 +495,8 @@ namespace DeathCorpses.Systems
                 "Restored corpse inventory from {0} to {1} (index {2})",
                 player.PlayerName, giveToPlayer.PlayerName, id));
         }
+
+        // --- Config commands ---
 
         private static PropertyInfo? FindConfigProperty(string name)
         {

@@ -81,7 +81,7 @@ namespace DeathCorpses.Systems
                 // Save content for /dc corpse
                 if (Core.Config.MaxCorpsesSavedPerPlayer > 0)
                 {                    
-                    SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ);
+                    SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ, corpseEntity.CorpseId);
                 }
 
                 // Spawn corpse
@@ -376,7 +376,7 @@ namespace DeathCorpses.Systems
                 .ToArray();
         }
 
-        public void SaveDeathContent(InventoryGeneric inventory, IPlayer player, Vec3d gravePos)
+        public void SaveDeathContent(InventoryGeneric inventory, IPlayer player, Vec3d gravePos, string corpseId)
         {
             string path = GetDeathDataPath(player);
             string[] files = GetDeathDataFiles(player);
@@ -391,6 +391,7 @@ namespace DeathCorpses.Systems
             tree.SetInt("graveX", (int)gravePos.X);
             tree.SetInt("graveY", (int)gravePos.Y);
             tree.SetInt("graveZ", (int)gravePos.Z);
+            tree.SetString("corpseId", corpseId);
 
             string name = $"inventory-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.dat";
             File.WriteAllBytes($"{path}/{name}", tree.ToBytes());
@@ -408,6 +409,23 @@ namespace DeathCorpses.Systems
                 tree.GetInt("graveX"),
                 tree.GetInt("graveY"),
                 tree.GetInt("graveZ"));
+        }
+
+        public string? LoadCorpseId(string filePath)
+        {
+            var tree = new TreeAttribute();
+            tree.FromBytes(File.ReadAllBytes(filePath));
+            return tree.GetString("corpseId");
+        }
+
+        public void UpdateCorpsePosition(string filePath, Vec3d newPos)
+        {
+            var tree = new TreeAttribute();
+            tree.FromBytes(File.ReadAllBytes(filePath));
+            tree.SetInt("graveX", (int)newPos.X);
+            tree.SetInt("graveY", (int)newPos.Y);
+            tree.SetInt("graveZ", (int)newPos.Z);
+            File.WriteAllBytes(filePath, tree.ToBytes());
         }
 
         public InventoryGeneric LoadLastDeathContent(IPlayer player, int offset = 0)
