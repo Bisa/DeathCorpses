@@ -168,5 +168,5 @@ To publish a prerelease from any branch or commit without a tag, trigger the **R
 gh workflow run release.yml -f ref=main
 ```
 
-Or use the GitHub Actions UI. This produces a prerelease tagged `1.0.0-rc.abc1234` (base version from `modinfo.json` + short commit hash).
+Or use the GitHub Actions UI. This produces a prerelease tagged `1.0.0-rc.42` (base version from `modinfo.json` + CI run number).
 
