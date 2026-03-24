@@ -43,6 +43,7 @@ All commands require the privilege configured in `CommandPrivilege` (default: `g
 | `/dc corpse list <player>` | Lists all saved corpses for a player, numbered by date |
 | `/dc corpse get <player> <give to player> [id]` | Restores a corpse's inventory to a player. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc corpse remove <player> [id]` | Removes corpses for a player. If `id` is given, only that saved corpse is removed. Without `id`, deletes all saved corpses and despawns any corpse entities in the world |
+| `/dc corpse tp <player> [id]` | Teleports you to a player's corpse. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc config list` | Shows all config options and their current values |
 | `/dc config get <option>` | Shows the current value of a specific config option |
 | `/dc config set <option> <value>` | Changes a config option at runtime and saves it to disk |

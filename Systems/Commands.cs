@@ -52,6 +52,12 @@ namespace DeathCorpses.Systems
                             parsers.OptionalInt("id", -1))
                         .HandleWith(RemoveDeathContent)
                     .EndSubCommand()
+                    .BeginSubCommand("tp")
+                        .WithArgs(
+                            parsers.Player("player", api),
+                            parsers.OptionalInt("id", 0))
+                        .HandleWith(TeleportToCorpse)
+                    .EndSubCommand()
                 .EndSubCommand()
                 .BeginSubCommand("config")
                     .WithDescription("View or change config settings")
@@ -187,6 +193,41 @@ namespace DeathCorpses.Systems
             return TextCommandResult.Success(Lang.Get(
                 "Removed {0} corpse(s) for {1}",
                 fileCount, player.PlayerName));
+        }
+
+        private TextCommandResult TeleportToCorpse(TextCommandCallingArgs args)
+        {
+            IPlayer player = (IPlayer)args[0];
+            int id = (int)args[1];
+            string[] files = _deathContentManager.GetDeathDataFiles(player);
+
+            if (files.Length == 0)
+            {
+                return TextCommandResult.Error(Lang.Get("No saved corpses found"));
+            }
+
+            if (id < 0 || id >= files.Length)
+            {
+                return TextCommandResult.Error(Lang.Get("Index {0} not found", id));
+            }
+
+            BlockPos? pos = _deathContentManager.LoadCorpsePosition(files[id]);
+            if (pos == null)
+            {
+                return TextCommandResult.Error(Lang.Get("Corpse {0} has no saved position", id));
+            }
+
+            var caller = args.Caller.Player as IServerPlayer;
+            if (caller?.Entity == null)
+            {
+                return TextCommandResult.Error(Lang.Get("You must be in-game to teleport"));
+            }
+
+            caller.Entity.TeleportTo(pos.ToVec3d().Add(0.5, 0, 0.5));
+
+            return TextCommandResult.Success(Lang.Get(
+                "Teleported to corpse {0} of {1} at {2}, {3}, {4}",
+                id, player.PlayerName, pos.X, pos.Y, pos.Z));
         }
 
         private TextCommandResult ReturnThings(TextCommandCallingArgs args)
