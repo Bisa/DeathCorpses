@@ -118,7 +118,7 @@ To verify that a release artifact matches the source:
 Find the zip attached to a release on the [releases page](https://github.com/Bisa/DeathCorpses/releases) and note its SHA-256 hash:
 
 ```sh
-sha256sum deathcorpses-vs<vintagestory version>_<version>.zip
+sha256sum deathcorpses-<version>.zip
 ```
 
 **2. Checkout the corresponding tag and build it yourself**
