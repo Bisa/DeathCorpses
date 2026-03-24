@@ -112,7 +112,7 @@
         packages.default = self.packages.${system}.zip;
 
         packages.zip =
-          pkgs.runCommand "${modId}_${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
+          pkgs.runCommand "${modId}-${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
             mkdir -p staging
 
             # Static assets, modinfo (patched for minimum VS version), icon — from net8 impl

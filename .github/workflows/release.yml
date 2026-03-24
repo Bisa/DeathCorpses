@@ -62,7 +62,7 @@ jobs:
           VERSION=${{ steps.info.outputs.version }}
 
           nix build .#zip
-          cp result "${MODID}_${VERSION}.zip"
+          cp result "${MODID}-${VERSION}.zip"
 
       - name: Create release
         env:
@@ -81,7 +81,7 @@ jobs:
             $PRERELEASE_FLAGS \
             --title "${VERSION}" \
             --generate-notes \
-            "${MODID}_${VERSION}.zip"
+            "${MODID}-${VERSION}.zip"
           gh release edit "${VERSION}" --draft=false
 
       - name: Summary
@@ -94,5 +94,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The mod DB upload API is not yet implemented. Upload manually:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Download: [\`${MODID}_${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}_${VERSION}.zip)" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download: [\`${MODID}-${VERSION}.zip\`](https://github.com/${REPO}/releases/download/${VERSION}/${MODID}-${VERSION}.zip)" >> $GITHUB_STEP_SUMMARY
           echo "2. Upload at: [mods.vintagestory.at/${MODID}](https://mods.vintagestory.at/${MODID})" >> $GITHUB_STEP_SUMMARY
