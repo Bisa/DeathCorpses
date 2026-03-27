@@ -220,7 +220,7 @@ namespace DeathCorpses.Systems
                     LoadChunkThen(pos, () => DespawnCorpsesInLoadedEntities(player.PlayerUID));
                 }
 
-                File.Delete(files[id]);
+                _deathContentManager.DeleteCorpseSaveFile(files[id]);
                 return TextCommandResult.Success(Lang.Get(
                     "Removed corpse {0} for {1}",
                     id, player.PlayerName));
@@ -254,7 +254,7 @@ namespace DeathCorpses.Systems
             int fileCount = files.Length;
             foreach (string file in files)
             {
-                File.Delete(file);
+                _deathContentManager.DeleteCorpseSaveFile(file);
             }
 
             return TextCommandResult.Success(Lang.Get(
@@ -517,7 +517,7 @@ namespace DeathCorpses.Systems
                     }
                 }
 
-                File.Delete(filePath);
+                _deathContentManager.DeleteCorpseSaveFile(filePath);
             }
 
             return TextCommandResult.Success(Lang.Get(

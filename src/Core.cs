@@ -15,9 +15,13 @@ namespace DeathCorpses
             Config = configs.GetConfig<Config>();
 
             api.World.Config.SetBool($"{Mod.Info.ModID}:CorpseCompassEnabled", Config.CorpseCompassEnabled);
+            api.World.Config.SetBool($"{Mod.Info.ModID}:ObituariesEnabled", Config.ObituariesEnabled);
 
             api.RegisterEntity("EntityPlayerCorpse", typeof(EntityPlayerCorpse));
             api.RegisterItemClass("ItemCorpseCompass", typeof(ItemCorpseCompass));
+            api.RegisterItemClass("ItemObituaries", typeof(ItemObituaries));
+            api.RegisterItemClass("ItemObituariesBound", typeof(ItemObituariesBound));
+            api.RegisterItemClass("ItemObituariesFaded", typeof(ItemObituariesFaded));
         }
 
         public override void AssetsLoaded(ICoreAPI api)

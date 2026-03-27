@@ -1,0 +1,32 @@
+[
+  {
+    "file": "itemtypes/obituaries.json",
+    "op": "replace",
+    "path": "/enabled",
+    "value": "false",
+    "condition": {
+      "when": "deathcorpses:ObituariesEnabled",
+      "isValue": "false"
+    }
+  },
+  {
+    "file": "itemtypes/obituaries-bound.json",
+    "op": "replace",
+    "path": "/enabled",
+    "value": "false",
+    "condition": {
+      "when": "deathcorpses:ObituariesEnabled",
+      "isValue": "false"
+    }
+  },
+  {
+    "file": "itemtypes/obituaries-faded.json",
+    "op": "replace",
+    "path": "/enabled",
+    "value": "false",
+    "condition": {
+      "when": "deathcorpses:ObituariesEnabled",
+      "isValue": "false"
+    }
+  }
+]

@@ -34,6 +34,8 @@ Once collected (or destroyed), the waypoint is optionally (on by default) remove
 
 A **Corpse Compass** item can be crafted to help locate nearby corpses when you're unsure of their exact position.
 
+An **Obituary** item can be purchased from survival goods and treasure hunter traders. Right-click an unbound obituary to bind it to a random player's corpse in the world. Once bound, hold it to see ghostly particle trails pointing toward the corpse's general area (randomized within a configurable radius). Each right-click refreshes the hint direction. If the corpse is collected or destroyed, the bound obituary fades into a **Faded Obituary** — a collectible keepsake with no active tracking.
+
 ### Commands
 
 All commands require the privilege configured in `CommandPrivilege` (default: `gamemode`).
@@ -72,6 +74,9 @@ The config file is created at `ModConfig/deathcorpses.json` on first run. All se
 | `FreeCorpseAfterTime` | `240` | In-game hours after which anyone can collect the corpse. `0` = always free, negative = never free |
 | `CorpseCollectionTime` | `1` | Seconds of right-click hold required to collect the corpse |
 | `CorpseCompassEnabled` | `true` | Enables the Corpse Compass item. Setting to `false` turns existing compasses into unknown items |
+| `ObituariesEnabled` | `false` | Enables the Obituary item purchasable from traders. Setting to `false` removes it from traders and creative inventory |
+| `ObituariesHintRadius` | `50` | Radius (in blocks) around the corpse within which the obituary hint position is randomized (1–1000) |
+| `ObituariesFavorOnline` | `false` | If true, obituaries prefer binding to corpses belonging to online players. If false, picks equally from all corpses saved on disk |
 | `DropArmorOnDeath` | `Vanilla` | Controls armor drop behaviour. `Vanilla` = respect the game's own setting, `Armor` = always save armor into the corpse, `ArmorAndCloth` = save armor and clothing |
 | `RemoveCorpseOnGet` | `true` | If true, `/dc corpse get` removes the corpse entity and save file after restoring the inventory |
 | `RandomCorpse` | `false` | If true, disables waypoint creation and spawns the corpse at a random location within `RandomCorpseRadius` blocks of the death point |

@@ -14,5 +14,24 @@
   "corpsecompass-target-set": "Target set on the last corpse",
   "corpsecompass-no-last-corpse": "Last corpse not found",
 
+  "item-obituaries": "Obituary",
+  "deathcorpses:item-handbooktitle-deathcorpses:obituaries": "Usage",
+  "deathcorpses:item-handbooktext-deathcorpses:obituaries": "A mysterious death notice purchased from traders. Use it to bind to a random player's corpse somewhere in the world. Once bound, it becomes a unique tracker that points you in their general direction.",
+
+  "item-obituaries-bound": "Bound Obituary",
+  "deathcorpses:item-handbooktitle-deathcorpses:obituaries-bound": "Usage",
+  "deathcorpses:item-handbooktext-deathcorpses:obituaries-bound": "This obituary is bound to a specific player's corpse. Use it to sense the general direction toward that corpse. Each reading gives a slightly different hint. If the corpse is collected or destroyed, the obituary fades.",
+
+  "item-obituaries-faded": "Faded Obituary",
+  "deathcorpses:item-handbooktitle-deathcorpses:obituaries-faded": "Usage",
+  "deathcorpses:item-handbooktext-deathcorpses:obituaries-faded": "The corpse this obituary once tracked is gone. All that remains is a faded memory of the fallen.",
+
+  "obituaries-no-corpses": "The ink remains still — no souls have departed in this world",
+  "obituaries-hint": "The obituary whispers of {0}'s demise... you sense a pull in their direction",
+  "obituaries-bound": "Bound to {0}'s corpse",
+  "obituaries-distant": "The spirits stir but the path to {0}'s remains is shrouded in fog... venture closer",
+  "obituaries-trail-cold": "The trail to {0}'s corpse has gone cold... the ink fades before your eyes",
+  "obituaries-faded-desc": "A faded record of {0}'s passing",
+
   "death-waypoint-name": "Death: {0}"
 }

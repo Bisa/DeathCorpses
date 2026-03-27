@@ -1,0 +1,45 @@
+{
+  "enabled": true,
+  "code": "obituaries",
+  "class": "ItemObituaries",
+  "maxstacksize": 8,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "tools": [ "*" ],
+    "deathcorpses": [ "*" ]
+  },
+  "shape": { "base": "item/obituary" },
+  "textures": {
+    "paper": { "base": "item/obituaries-unbound" }
+  },
+  "attributes": {
+    "shelvable": true,
+    "onDisplayTransform": {
+      "translation": { "x": 0, "y": -0.1, "z": 0 },
+      "scale": 0.8
+    }
+  },
+  "storageFlags": 257,
+  "heldTpUseAnimation": "",
+  "guiTransform": {
+    "translation": { "x": 3, "y": 1, "z": 0 },
+    "rotation": { "x": 89, "y": 180, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.5 },
+    "scale": 2.5
+  },
+  "fpHandTransform": {
+    "translation": { "x": 0.05, "y": 0.1, "z": 0.2 },
+    "rotation": { "x": 14, "y": -8, "z": 12 },
+    "scale": 1.3
+  },
+  "tpHandTransform": {
+    "translation": { "x": -2.05, "y": -1.1, "z": -1.5 },
+    "rotation": { "x": 2, "y": -82, "z": -1 }
+  },
+  "groundTransform": {
+    "translation": { "x": 0, "y": 0.25, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.53 },
+    "scale": 2.4
+  }
+}

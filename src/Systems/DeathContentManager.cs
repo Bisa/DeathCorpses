@@ -3,6 +3,7 @@ using DeathCorpses.Lib.Utils;
 using HarmonyLib;
 using DeathCorpses.Entities;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace DeathCorpses.Systems
         //private static readonly MethodInfo _rebuildMapComponentsMethod = AccessTools.Method(typeof(WaypointMapLayer), "RebuildMapComponents");
 
         private ICoreServerAPI _sapi = null!;
+        private readonly HashSet<string> _knownCorpseIds = new();
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Server;
 
@@ -32,6 +34,31 @@ namespace DeathCorpses.Systems
             _sapi = api;
             api.Event.OnEntityDeath += OnEntityDeath;
             api.Event.PlayerJoin += OnPlayerJoin;
+
+            BuildCorpseIdCache();
+        }
+
+        private void BuildCorpseIdCache()
+        {
+            string basePath = _sapi.GetOrCreateDataPath(
+                Path.Combine("ModData", _sapi.World.SavegameIdentifier, Mod.Info.ModID));
+
+            if (!Directory.Exists(basePath)) return;
+
+            foreach (string playerDir in Directory.GetDirectories(basePath))
+            {
+                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                {
+                    try
+                    {
+                        string? id = LoadCorpseId(file);
+                        if (id != null) _knownCorpseIds.Add(id);
+                    }
+                    catch { }
+                }
+            }
+
+            Mod.Logger.Notification($"Corpse ID cache built: {_knownCorpseIds.Count} entries");
         }
 
         private void OnPlayerJoin(IServerPlayer byPlayer)
@@ -508,6 +535,12 @@ namespace DeathCorpses.Systems
 
             for (int i = files.Length - 1; i > Core.Config.MaxCorpsesSavedPerPlayer - 2; i--)
             {
+                try
+                {
+                    string? oldId = LoadCorpseId(files[i]);
+                    if (oldId != null) _knownCorpseIds.Remove(oldId);
+                }
+                catch { }
                 File.Delete(files[i]);
             }
 
@@ -521,6 +554,7 @@ namespace DeathCorpses.Systems
             string name = $"inventory-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.dat";
             string filePath = $"{path}/{name}";
             File.WriteAllBytes(filePath, tree.ToBytes());
+            _knownCorpseIds.Add(corpseId);
             return filePath;
         }
 
@@ -545,6 +579,56 @@ namespace DeathCorpses.Systems
             return tree.GetString("corpseId");
         }
 
+        /// <summary>
+        /// Deletes a corpse save file and removes its ID from the cache.
+        /// Use this instead of raw File.Delete to keep the cache in sync.
+        /// </summary>
+        public void DeleteCorpseSaveFile(string filePath)
+        {
+            try
+            {
+                string? id = LoadCorpseId(filePath);
+                if (id != null) _knownCorpseIds.Remove(id);
+            }
+            catch { }
+            File.Delete(filePath);
+        }
+
+        /// <summary>
+        /// Deletes the save file on disk that matches the given corpse ID.
+        /// Called when a corpse is collected via entity interaction.
+        /// </summary>
+        public void DeleteCorpseSaveByCorpseId(string corpseId)
+        {
+            _knownCorpseIds.Remove(corpseId);
+
+            string basePath = _sapi.GetOrCreateDataPath(
+                Path.Combine("ModData", _sapi.World.SavegameIdentifier, Mod.Info.ModID));
+
+            if (!Directory.Exists(basePath)) return;
+
+            foreach (string playerDir in Directory.GetDirectories(basePath))
+            {
+                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                {
+                    try
+                    {
+                        string? id = LoadCorpseId(file);
+                        if (id == corpseId)
+                        {
+                            File.Delete(file);
+                            Mod.Logger.Notification($"Deleted corpse save file for corpseId {corpseId}");
+                            return;
+                        }
+                    }
+                    catch
+                    {
+                        // Skip corrupted files
+                    }
+                }
+            }
+        }
+
         public void UpdateCorpsePosition(string filePath, Vec3d newPos)
         {
             var tree = new TreeAttribute();
@@ -553,6 +637,118 @@ namespace DeathCorpses.Systems
             tree.SetInt("graveY", (int)newPos.Y);
             tree.SetInt("graveZ", (int)newPos.Z);
             File.WriteAllBytes(filePath, tree.ToBytes());
+        }
+
+        public class CorpseRecord
+        {
+            public string CorpseId { get; set; } = "";
+            public string OwnerName { get; set; } = "";
+            public BlockPos Position { get; set; } = new();
+        }
+
+        /// <summary>
+        /// Checks whether a corpse with the given ID exists on disk.
+        /// If corpseId is null, returns true if any corpse save exists.
+        /// Uses an in-memory cache — no disk I/O.
+        /// </summary>
+        public bool CorpseExistsOnDisk(string? corpseId)
+        {
+            if (corpseId == null) return _knownCorpseIds.Count > 0;
+            return _knownCorpseIds.Contains(corpseId);
+        }
+
+        /// <summary>
+        /// Returns a random corpse record from disk, or null if none exist.
+        /// If onlineOnly is true, only considers corpses belonging to currently online players.
+        /// Used by obituaries to bind to corpses in unloaded chunks.
+        /// </summary>
+        public CorpseRecord? GetRandomCorpseFromDisk(Random rand, bool onlineOnly = false)
+        {
+            string basePath = _sapi.GetOrCreateDataPath(
+                Path.Combine("ModData", _sapi.World.SavegameIdentifier, Mod.Info.ModID));
+
+            if (!Directory.Exists(basePath)) return null;
+
+            HashSet<string>? onlineUIDs = null;
+            if (onlineOnly)
+            {
+                onlineUIDs = new HashSet<string>();
+                foreach (var player in _sapi.World.AllOnlinePlayers)
+                {
+                    onlineUIDs.Add(player.PlayerUID);
+                }
+            }
+
+            var records = new List<(string file, string playerDir)>();
+            foreach (string playerDir in Directory.GetDirectories(basePath))
+            {
+                if (onlineUIDs != null && !onlineUIDs.Contains(Path.GetFileName(playerDir)))
+                {
+                    continue;
+                }
+
+                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                {
+                    records.Add((file, playerDir));
+                }
+            }
+
+            // Shuffle and try until we find a valid record
+            for (int attempts = records.Count; attempts > 0; attempts--)
+            {
+                int idx = rand.Next(records.Count);
+                var (file, playerDir) = records[idx];
+                records.RemoveAt(idx);
+
+                try
+                {
+                    var tree = new TreeAttribute();
+                    tree.FromBytes(File.ReadAllBytes(file));
+
+                    string? id = tree.GetString("corpseId");
+                    if (id == null) continue;
+
+                    BlockPos? pos = null;
+                    if (tree.HasAttribute("graveX"))
+                    {
+                        pos = new BlockPos(
+                            tree.GetInt("graveX"),
+                            tree.GetInt("graveY"),
+                            tree.GetInt("graveZ"));
+                    }
+                    if (pos == null) continue;
+
+                    // Resolve owner name from player UID directory name
+                    string uid = Path.GetFileName(playerDir);
+                    string ownerName = ResolvePlayerName(uid) ?? uid;
+
+                    return new CorpseRecord
+                    {
+                        CorpseId = id,
+                        OwnerName = ownerName,
+                        Position = pos
+                    };
+                }
+                catch
+                {
+                    // Skip corrupted files
+                }
+            }
+
+            return null;
+        }
+
+        private string? ResolvePlayerName(string uid)
+        {
+            foreach (var player in _sapi.World.AllOnlinePlayers)
+            {
+                if (player.PlayerUID == uid) return player.PlayerName;
+            }
+            foreach (var player in _sapi.World.AllPlayers)
+            {
+                if (player.PlayerUID == uid) return player.PlayerName;
+            }
+            return null;
         }
 
         public InventoryGeneric LoadLastDeathContent(IPlayer player, int offset = 0)

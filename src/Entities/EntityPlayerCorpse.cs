@@ -290,6 +290,11 @@ namespace DeathCorpses.Entities
                 Api.BroadcastMessage(msg);
             }
 
+            if (CorpseId != null)
+            {
+                ModSystemRegistry.Get<DeathContentManager>().DeleteCorpseSaveByCorpseId(CorpseId);
+            }
+
             Die();
         }
 
@@ -299,6 +304,11 @@ namespace DeathCorpses.Entities
             {
                 Inventory.Api = Api; // fix strange null
                 Inventory.DropAll(SidedPos.XYZ.AddCopy(0, 1, 0));
+            }
+
+            if (Api.Side == EnumAppSide.Server && CorpseId != null)
+            {
+                ModSystemRegistry.Get<DeathContentManager>().DeleteCorpseSaveByCorpseId(CorpseId);
             }
 
             string msg = string.Format(

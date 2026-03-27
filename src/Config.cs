@@ -58,6 +58,16 @@ namespace DeathCorpses
         [Description("If you set it to false, all already existing compasses will turn into an unknown item")]
         public bool CorpseCompassEnabled { get; set; } = true;
 
+        [Description("Enables the Obituaries item, purchasable from traders to get hints toward a random player's corpse")]
+        public bool ObituariesEnabled { get; set; } = false;
+
+        [Description("Radius (in blocks) around the corpse within which the obituary hint position is randomized")]
+        [Range(1, 1000)]
+        public int ObituariesHintRadius { get; set; } = 50;
+
+        [Description("If true, obituaries prefer binding to corpses belonging to online players. If false, picks equally from all corpses on disk")]
+        public bool ObituariesFavorOnline { get; set; } = false;
+
         [Description("Override vanilla keep inventory system, so you can drop armor and clothing into the corpse")]
         public DropArmorMode DropArmorOnDeath { get; set; } = DropArmorMode.Vanilla;
         public enum DropArmorMode { Vanilla, Armor, ArmorAndCloth };
