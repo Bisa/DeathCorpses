@@ -64,5 +64,12 @@ namespace DeathCorpses
 
         [Description("If true, '/dc corpse get' will remove the corpse entity and save file after restoring the inventory")]
         public bool RemoveCorpseOnGet { get; set; } = true;
+
+        [Description("If true, disables waypoint creation and spawns the corpse at a random location within RandomCorpseRadius blocks of the death point")]
+        public bool RandomCorpse { get; set; } = false;
+
+        [Description("Maximum radius (in blocks) from the death point where the corpse can spawn when RandomCorpse is enabled")]
+        [Range(1, 10000)]
+        public int RandomCorpseRadius { get; set; } = 5000;
     }
 }

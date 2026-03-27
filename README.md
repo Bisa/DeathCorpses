@@ -74,6 +74,8 @@ The config file is created at `ModConfig/deathcorpses.json` on first run. All se
 | `CorpseCompassEnabled` | `true` | Enables the Corpse Compass item. Setting to `false` turns existing compasses into unknown items |
 | `DropArmorOnDeath` | `Vanilla` | Controls armor drop behaviour. `Vanilla` = respect the game's own setting, `Armor` = always save armor into the corpse, `ArmorAndCloth` = save armor and clothing |
 | `RemoveCorpseOnGet` | `true` | If true, `/dc corpse get` removes the corpse entity and save file after restoring the inventory |
+| `RandomCorpse` | `false` | If true, disables waypoint creation and spawns the corpse at a random location within `RandomCorpseRadius` blocks of the death point |
+| `RandomCorpseRadius` | `5000` | Maximum radius (in blocks) from the death point where the corpse can spawn when `RandomCorpse` is enabled (1–10000) |
 | `DebugMode` | `false` | Broadcasts internal corpse creation/collection messages to all players |
 
 ---

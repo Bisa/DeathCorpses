@@ -117,6 +117,12 @@ namespace DeathCorpses.Items
         {
             if (api.Side == EnumAppSide.Server && byEntity is EntityPlayer playerEntity)
             {
+                if (Core.Config.RandomCorpse)
+                {
+                    byEntity.SendMessage(Lang.Get($"{Constants.ModId}:corpsecompass-no-accurate-reading"));
+                    return;
+                }
+
                 double distance = double.MaxValue;
                 EntityPlayerCorpse? nearestCorpse = null;
 

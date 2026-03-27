@@ -70,42 +70,21 @@ namespace DeathCorpses.Systems
             var corpseEntity = CreateCorpseEntity(byPlayer);
             if (corpseEntity.Inventory != null && !corpseEntity.Inventory.Empty)
             {
-                if (Core.Config.CreateWaypoint == Config.CreateWaypointMode.Always)
+                if (Core.Config.RandomCorpse)
                 {
-                    if (byPlayer.Entity is EntityPlayer ep)
+                    // Fix #1: Save inventory to disk immediately at the death position
+                    // so it is never lost if the async chunk load fails or the server crashes
+                    string? saveFile = null;
+                    if (Core.Config.MaxCorpsesSavedPerPlayer > 0)
                     {
-                        CreateDeathPoint(byPlayer.Entity, corpseEntity);
+                        saveFile = SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ, corpseEntity.CorpseId);
                     }
+
+                    RandomizeCorpsePosition(corpseEntity, () => FinalizeCorpse(byPlayer, corpseEntity, skipWaypoint: true, saveFile: saveFile));
                 }
-
-                // Save content for /dc corpse
-                if (Core.Config.MaxCorpsesSavedPerPlayer > 0)
-                {                    
-                    SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ, corpseEntity.CorpseId);
-                }
-
-                // Spawn corpse
-                if (Core.Config.CreateCorpse)
-                {
-                    _sapi.World.SpawnEntity(corpseEntity);
-
-                    string message = string.Format(
-                        "Created {0} at {1}, id {2}",
-                        corpseEntity.GetName(),
-                        corpseEntity.SidedPos.XYZ.RelativePos(_sapi),
-                        corpseEntity.EntityId);
-
-                    Mod.Logger.Notification(message);
-                    if (Core.Config.DebugMode)
-                    {
-                        _sapi.BroadcastMessage(message);
-                    }
-                }
-
-                // Or drop all if corpse creation is disabled
                 else
                 {
-                    corpseEntity.Inventory.DropAll(corpseEntity.Pos.XYZ);
+                    FinalizeCorpse(byPlayer, corpseEntity, skipWaypoint: false, saveFile: null);
                 }
             }
             else
@@ -116,6 +95,52 @@ namespace DeathCorpses.Systems
                 {
                     _sapi.BroadcastMessage(message);
                 }
+            }
+        }
+
+        private void FinalizeCorpse(IServerPlayer byPlayer, EntityPlayerCorpse corpseEntity, bool skipWaypoint, string? saveFile)
+        {
+            if (!skipWaypoint && Core.Config.CreateWaypoint == Config.CreateWaypointMode.Always)
+            {
+                if (byPlayer.Entity is EntityPlayer ep)
+                {
+                    CreateDeathPoint(byPlayer.Entity, corpseEntity);
+                }
+            }
+
+            // Save content for /dc corpse (skip if already saved for random corpse)
+            if (saveFile == null && Core.Config.MaxCorpsesSavedPerPlayer > 0)
+            {
+                SaveDeathContent(corpseEntity.Inventory, byPlayer, corpseEntity.ServerPos.XYZ, corpseEntity.CorpseId);
+            }
+            // Update the save file with the final randomized position
+            else if (saveFile != null)
+            {
+                UpdateCorpsePosition(saveFile, corpseEntity.ServerPos.XYZ);
+            }
+
+            // Spawn corpse
+            if (Core.Config.CreateCorpse)
+            {
+                _sapi.World.SpawnEntity(corpseEntity);
+
+                string message = string.Format(
+                    "Created {0} at {1}, id {2}",
+                    corpseEntity.GetName(),
+                    corpseEntity.SidedPos.XYZ.RelativePos(_sapi),
+                    corpseEntity.EntityId);
+
+                Mod.Logger.Notification(message);
+                if (Core.Config.DebugMode)
+                {
+                    _sapi.BroadcastMessage(message);
+                }
+            }
+
+            // Or drop all if corpse creation is disabled
+            else
+            {
+                corpseEntity.Inventory.DropAll(corpseEntity.Pos.XYZ);
             }
         }
 
@@ -146,6 +171,106 @@ namespace DeathCorpses.Systems
             corpse.World = _sapi.World;
 
             return corpse;
+        }
+
+        private const int WorldMargin = 10;
+        private const int MaxRandomAttempts = 10;
+
+        private void RandomizeCorpsePosition(EntityPlayerCorpse corpse, Action onReady)
+        {
+            var origin = corpse.ServerPos.AsBlockPos;
+            TryRandomPosition(corpse, origin, 0, onReady);
+        }
+
+        private void TryRandomPosition(EntityPlayerCorpse corpse, BlockPos origin, int attempt, Action onReady)
+        {
+            var rand = _sapi.World.Rand;
+            int radius = Core.Config.RandomCorpseRadius;
+
+            double angle = rand.NextDouble() * 2 * Math.PI;
+            double dist = Math.Sqrt(rand.NextDouble()) * radius;
+            int offsetX = (int)Math.Round(dist * Math.Cos(angle));
+            int offsetZ = (int)Math.Round(dist * Math.Sin(angle));
+
+            int newX = origin.X + offsetX;
+            int newZ = origin.Z + offsetZ;
+
+            // Fix #4: Guard against worlds smaller than 2*margin+1 blocks
+            int mapSizeX = _sapi.WorldManager.MapSizeX;
+            int mapSizeY = _sapi.WorldManager.MapSizeY;
+            int mapSizeZ = _sapi.WorldManager.MapSizeZ;
+            int minX = Math.Min(WorldMargin, mapSizeX / 2);
+            int maxX = Math.Max(mapSizeX - 1 - WorldMargin, mapSizeX / 2);
+            int minZ = Math.Min(WorldMargin, mapSizeZ / 2);
+            int maxZ = Math.Max(mapSizeZ - 1 - WorldMargin, mapSizeZ / 2);
+            int minY = Math.Min(WorldMargin, mapSizeY / 2);
+            int maxY = Math.Max(mapSizeY - 1 - WorldMargin, mapSizeY / 2);
+
+            newX = Math.Clamp(newX, minX, maxX);
+            newZ = Math.Clamp(newZ, minZ, maxZ);
+
+            int chunkSize = _sapi.World.BlockAccessor.ChunkSize;
+            int chunkX = newX / chunkSize;
+            int chunkZ = newZ / chunkSize;
+
+            _sapi.WorldManager.LoadChunkColumnPriority(chunkX, chunkZ, new ChunkLoadOptions
+            {
+                OnLoaded = () =>
+                {
+                    _sapi.Event.RegisterCallback((dt) =>
+                    {
+                        var randomPos = new BlockPos(newX, mapSizeY - 1, newZ, origin.dimension);
+                        var floorPos = TryFindFloor(randomPos);
+                        floorPos.Y = Math.Clamp(floorPos.Y, minY, maxY);
+
+                        // Fix #2 & #3: Check if position is valid (has solid ground and no liquid above)
+                        if (!IsPositionSafe(floorPos))
+                        {
+                            if (attempt < MaxRandomAttempts - 1)
+                            {
+                                Mod.Logger.Notification($"Random corpse attempt {attempt + 1} at {newX},{floorPos.Y},{newZ} is unsafe, retrying");
+                                TryRandomPosition(corpse, origin, attempt + 1, onReady);
+                                return;
+                            }
+
+                            Mod.Logger.Warning($"Random corpse exhausted {MaxRandomAttempts} attempts, falling back to death position");
+                            onReady();
+                            return;
+                        }
+
+                        Vec3d pos = floorPos.ToVec3d().Add(.5, 0, .5);
+                        corpse.ServerPos.SetPos(pos);
+                        corpse.Pos.SetPos(pos);
+
+                        onReady();
+                    }, 500);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Checks that the position has solid ground below and is not submerged in liquid or lava.
+        /// </summary>
+        private bool IsPositionSafe(BlockPos pos)
+        {
+            var accessor = _sapi.World.BlockAccessor;
+
+            // Check the block below has collision (solid ground)
+            var belowPos = pos.DownCopy();
+            var blockBelow = accessor.GetBlock(belowPos);
+            if (blockBelow.BlockId == 0 || blockBelow.CollisionBoxes == null || blockBelow.CollisionBoxes.Length == 0)
+            {
+                return false;
+            }
+
+            // Check the block at the corpse position is not liquid (water, lava, etc.)
+            var blockAt = accessor.GetBlock(pos);
+            if (blockAt.IsLiquid())
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary> Try to find the nearest block with collision below </summary>
@@ -376,7 +501,7 @@ namespace DeathCorpses.Systems
                 .ToArray();
         }
 
-        public void SaveDeathContent(InventoryGeneric inventory, IPlayer player, Vec3d gravePos, string corpseId)
+        public string SaveDeathContent(InventoryGeneric inventory, IPlayer player, Vec3d gravePos, string corpseId)
         {
             string path = GetDeathDataPath(player);
             string[] files = GetDeathDataFiles(player);
@@ -394,7 +519,9 @@ namespace DeathCorpses.Systems
             tree.SetString("corpseId", corpseId);
 
             string name = $"inventory-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.dat";
-            File.WriteAllBytes($"{path}/{name}", tree.ToBytes());
+            string filePath = $"{path}/{name}";
+            File.WriteAllBytes(filePath, tree.ToBytes());
+            return filePath;
         }
 
         public BlockPos? LoadCorpsePosition(string filePath)
