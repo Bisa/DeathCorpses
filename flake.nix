@@ -148,6 +148,13 @@
             git config --local core.hooksPath .githooks
           '';
         };
+      } // lib.optionalAttrs pkgs.stdenv.isLinux {
+        # GUI test: launch VS client with the mod, create a new world via OCR-driven clicks.
+        # Run: nix build .#checks.x86_64-linux.gui
+        checks.gui = import ./tests/gui.nix {
+          inherit pkgs lib;
+          mod = self.packages.${system}.zip;
+        };
       }
     );
 }
