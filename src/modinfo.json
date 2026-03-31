@@ -3,7 +3,7 @@
   "side": "universal",
   "name": "Death Corpses",
   "modid": "deathcorpses",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "website": "https://github.com/Bisa/DeathCorpses",
   "authors": [ "DArkHekRoMaNT", "Marzz2006", "Bisa" ],
   "description": "Run back and collect items from your corpse if you die.",
