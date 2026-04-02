@@ -102,7 +102,8 @@ jobs:
             --title "${VERSION}" \
             --notes-file RELEASE_NOTES.md \
             "${MODID}-${VERSION}.zip" \
-            CHANGELOG.md
+            CHANGELOG.md \
+            README.md
           gh release edit "${VERSION}" --draft=false
 
       - name: Summary
