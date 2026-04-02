@@ -1,6 +1,8 @@
 # Death Corpses
 
-A [Vintage Story](https://www.vintagestory.at/) mod 
+A [Vintage Story](https://www.vintagestory.at/) mod
+
+Death Corpses spawns a lootable corpse entity at the location where a player dies, preserving their inventory for later retrieval. A map waypoint marks the death site so players can find their way back. Server operators can configure corpse behavior, waypoint appearance, and collection rules to fit their server's play style.
 
 - **Mod page:** https://mods.vintagestory.at/deathcorpses
 - **Authors:** DArkHekRoMaNT (original mod), Marzz2006 (vs 1.21 adaption), Bisa
@@ -24,17 +26,14 @@ A single zip works on both versions — the mod auto-detects the runtime at star
 
 ## Usage
 
-### How it works
+### Features
 
-When you die with items in your inventory, a corpse is spawned at your feet containing all of your items. A waypoint is added to your map marking the corpse location.
-
-Right-click and hold on the corpse to collect your items once you have returned to the location of your death.
-
-Once collected (or destroyed), the waypoint is optionally (on by default) removed.
-
-A **Corpse Compass** item can be crafted to help locate nearby corpses when you're unsure of their exact position.
-
-An **Obituary** item can be purchased from survival goods and treasure hunter traders. Right-click an unbound obituary to bind it to a random player's corpse in the world. Once bound, hold it to see ghostly particle trails pointing toward the corpse's general area (randomized within a configurable radius). Each right-click refreshes the hint direction. If the corpse is collected or destroyed, the bound obituary fades into a **Faded Obituary** — a collectible keepsake with no active tracking.
+- **Corpse** — On death, a lootable corpse entity spawns containing your inventory. Right-click and hold to collect your items.
+- **Death Waypoint** — A map waypoint marks the corpse location, automatically removed on collection.
+- **Free Corpse** — After a configurable duration, anyone can loot an unclaimed corpse.
+- **Corpse Compass** — Craftable item that highlights nearby corpses with a HUD indicator.
+- **Obituary** — Purchasable from traders. Bind to a random player's corpse, then hold to see particle trails pointing toward its general area. Fades into a collectible **Faded Obituary** once the corpse is collected.
+- **Random Corpse** — Optional mode that spawns corpses at a random location within a configurable radius of the death point, with no waypoint.
 
 ### Commands
 
