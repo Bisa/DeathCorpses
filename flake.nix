@@ -132,6 +132,9 @@
             cp ${implNet8}/${modId}-net8.dll   staging/${modId}-net8.bin
             cp ${implNet10}/${modId}-net10.dll  staging/${modId}-net10.bin
 
+            # Documentation
+            cp ${./README.md} staging/README.md
+
             cd staging
             find . -exec touch -t 198001010000.00 {} +
             find . | sort | zip -X -@ $out
