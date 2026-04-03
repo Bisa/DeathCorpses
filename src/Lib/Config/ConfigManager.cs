@@ -30,6 +30,7 @@ namespace DeathCorpses.Lib.Config
         public override void StartPre(ICoreAPI api)
         {
             _api = api;
+            DeathCorpses.ConfigMigrations.RegisterAll();
             LoadAllConfigs(out _versionMismatch);
         }
 
@@ -123,13 +124,21 @@ namespace DeathCorpses.Lib.Config
                             var path = Path.Combine(GamePaths.ModConfig, configAttr.Filename);
                             File.Copy(path, path + ".bak", true);
                         }
+                        if (loadedVersion > configAttr.Version)
+                        {
+                            Mod.Logger.Warning($"Config {FormatAssembly(type)} was written by a newer mod version, skipping save to avoid data loss");
+                        }
+                        else
+                        {
+                            ConfigUtil.SaveConfig(_api, type, config);
+                        }
                     }
                     catch (InvalidCastException e)
                     {
                         Mod.Logger.Error($"Config {FormatAssembly(type)} looks corrupted, a new one will be created. Error:\n{e}");
                         config = Activator.CreateInstance(type)!;
+                        ConfigUtil.SaveConfig(_api, type, config);
                     }
-                    ConfigUtil.SaveConfig(_api, type, config);
                     Configs.Add(type, config);
                     Mod.Logger.Notification($"Config {FormatAssembly(type)} loaded successfully");
                 }

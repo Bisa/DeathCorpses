@@ -4,7 +4,7 @@ using Vintagestory.API.Server;
 
 namespace DeathCorpses
 {
-    [Config("deathcorpses.json")]
+    [Config("deathcorpses.json", Version = 1)]
     public class Config
     {
         [Description("Burns in 15 seconds. LET EVERYTHING BURN IN LAVA!")]

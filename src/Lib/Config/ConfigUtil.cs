@@ -29,6 +29,15 @@ namespace DeathCorpses.Lib.Config
                 loadedVersion = (int)ConvertType(ReadValue(version), typeof(int), -1);
             }
 
+            if (configAttr.Version != -1 && loadedVersion < configAttr.Version)
+            {
+                var migrator = ConfigMigrationRegistry.GetMigrator(type);
+                if (migrator != null)
+                {
+                    jsonConfig = migrator.Migrate(jsonConfig, loadedVersion, configAttr.Version, logger);
+                }
+            }
+
             foreach (var prop in configProps)
             {
                 var defaultValue = prop.GetValue(defaultConfig);

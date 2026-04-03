@@ -1,3 +1,4 @@
+using DeathCorpses.Lib.Data;
 using DeathCorpses.Lib.Extensions;
 using DeathCorpses.Lib.Utils;
 using HarmonyLib;
@@ -24,6 +25,9 @@ namespace DeathCorpses.Systems
         //private static readonly MethodInfo _resendWaypointsMethod = AccessTools.Method(typeof(WaypointMapLayer), "ResendWaypoints");
         //private static readonly MethodInfo _rebuildMapComponentsMethod = AccessTools.Method(typeof(WaypointMapLayer), "RebuildMapComponents");
 
+        private const string CorpseMigratorKey = "corpse";
+        private const int CurrentCorpseVersion = 1;
+
         private ICoreServerAPI _sapi = null!;
         private readonly HashSet<string> _knownCorpseIds = new();
 
@@ -35,7 +39,29 @@ namespace DeathCorpses.Systems
             api.Event.OnEntityDeath += OnEntityDeath;
             api.Event.PlayerJoin += OnPlayerJoin;
 
+            CorpseMigrations.RegisterAll();
             BuildCorpseIdCache();
+        }
+
+        private TreeAttribute LoadAndMigrateTree(string filePath)
+        {
+            var tree = new TreeAttribute();
+            tree.FromBytes(File.ReadAllBytes(filePath));
+            int fileVersion = tree.GetInt("version", 0);
+            if (fileVersion < CurrentCorpseVersion)
+            {
+                var migrator = DataMigrationRegistry.GetMigrator(CorpseMigratorKey);
+                if (migrator != null)
+                {
+                    tree = migrator.Migrate(tree, fileVersion, CurrentCorpseVersion, Mod.Logger);
+                }
+            }
+            else if (fileVersion > CurrentCorpseVersion)
+            {
+                Mod.Logger.Warning($"Corpse file '{Path.GetFileName(filePath)}' version {fileVersion} " +
+                    $"is newer than current version {CurrentCorpseVersion}, loading with best effort.");
+            }
+            return tree;
         }
 
         private void BuildCorpseIdCache()
@@ -45,13 +71,22 @@ namespace DeathCorpses.Systems
 
             if (!Directory.Exists(basePath)) return;
 
+            int oldVersionCount = 0;
+            int currentVersionCount = 0;
+
             foreach (string playerDir in Directory.GetDirectories(basePath))
             {
                 foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
                 {
                     try
                     {
-                        string? id = LoadCorpseId(file);
+                        var tree = new TreeAttribute();
+                        tree.FromBytes(File.ReadAllBytes(file));
+                        int fileVersion = tree.GetInt("version", 0);
+                        if (fileVersion < CurrentCorpseVersion) oldVersionCount++;
+                        else currentVersionCount++;
+
+                        string? id = tree.GetString("corpseId");
                         if (id != null) _knownCorpseIds.Add(id);
                     }
                     catch { }
@@ -59,6 +94,10 @@ namespace DeathCorpses.Systems
             }
 
             Mod.Logger.Notification($"Corpse ID cache built: {_knownCorpseIds.Count} entries");
+            if (oldVersionCount > 0)
+            {
+                Mod.Logger.Warning($"Corpse files: {oldVersionCount} at older versions, {currentVersionCount} at current version {CurrentCorpseVersion}");
+            }
         }
 
         private void OnPlayerJoin(IServerPlayer byPlayer)
@@ -546,6 +585,7 @@ namespace DeathCorpses.Systems
 
             var tree = new TreeAttribute();
             inventory.ToTreeAttributes(tree);
+            tree.SetInt("version", CurrentCorpseVersion);
             tree.SetInt("graveX", (int)gravePos.X);
             tree.SetInt("graveY", (int)gravePos.Y);
             tree.SetInt("graveZ", (int)gravePos.Z);
@@ -560,8 +600,7 @@ namespace DeathCorpses.Systems
 
         public BlockPos? LoadCorpsePosition(string filePath)
         {
-            var tree = new TreeAttribute();
-            tree.FromBytes(File.ReadAllBytes(filePath));
+            var tree = LoadAndMigrateTree(filePath);
 
             if (!tree.HasAttribute("graveX"))
                 return null;
@@ -574,8 +613,7 @@ namespace DeathCorpses.Systems
 
         public string? LoadCorpseId(string filePath)
         {
-            var tree = new TreeAttribute();
-            tree.FromBytes(File.ReadAllBytes(filePath));
+            var tree = LoadAndMigrateTree(filePath);
             return tree.GetString("corpseId");
         }
 
@@ -613,7 +651,9 @@ namespace DeathCorpses.Systems
                 {
                     try
                     {
-                        string? id = LoadCorpseId(file);
+                        var tree = new TreeAttribute();
+                        tree.FromBytes(File.ReadAllBytes(file));
+                        string? id = tree.GetString("corpseId");
                         if (id == corpseId)
                         {
                             File.Delete(file);
@@ -631,8 +671,12 @@ namespace DeathCorpses.Systems
 
         public void UpdateCorpsePosition(string filePath, Vec3d newPos)
         {
-            var tree = new TreeAttribute();
-            tree.FromBytes(File.ReadAllBytes(filePath));
+            var tree = LoadAndMigrateTree(filePath);
+            int fileVersion = tree.GetInt("version", 0);
+            if (fileVersion <= CurrentCorpseVersion)
+            {
+                tree.SetInt("version", CurrentCorpseVersion);
+            }
             tree.SetInt("graveX", (int)newPos.X);
             tree.SetInt("graveY", (int)newPos.Y);
             tree.SetInt("graveZ", (int)newPos.Z);
@@ -702,8 +746,7 @@ namespace DeathCorpses.Systems
 
                 try
                 {
-                    var tree = new TreeAttribute();
-                    tree.FromBytes(File.ReadAllBytes(file));
+                    var tree = LoadAndMigrateTree(file);
 
                     string? id = tree.GetString("corpseId");
                     if (id == null) continue;
@@ -760,8 +803,7 @@ namespace DeathCorpses.Systems
 
             string file = GetDeathDataFiles(player).ElementAt(offset);
 
-            var tree = new TreeAttribute();
-            tree.FromBytes(File.ReadAllBytes(file));
+            var tree = LoadAndMigrateTree(file);
 
             var inv = new InventoryGeneric(tree.GetInt("qslots"), $"deathcorpses-{player.PlayerUID}", player.Entity.Api);
             inv.FromTreeAttributes(tree);
