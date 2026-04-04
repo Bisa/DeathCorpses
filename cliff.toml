@@ -6,7 +6,7 @@ repo = "DeathCorpses"
 header = ""
 body = """
 {%- for group, commits in commits | group_by(attribute="group") %}
-### {{ group | upper_first }}
+### {{ group | striptags | trim | upper_first }}
 {% for commit in commits -%}
 - [`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/Bisa/DeathCorpses/commit/{{ commit.id }}) **{{ commit.message | split(pat="\n") | first | trim }}**
 {%- if commit.body %}
@@ -15,7 +15,10 @@ body = """
 
 {%- endif %}
 
-{% endfor %}
+{% endfor -%}
+{%- if group is containing("Features") %}
+---
+{% endif -%}
 {% endfor -%}
 """
 trim = true
@@ -24,17 +27,17 @@ trim = true
 conventional_commits = true
 filter_unconventional = true
 commit_parsers = [
-  { message = "^feat", group = "Features" },
-  { message = "^fix", group = "Bug Fixes" },
-  { message = "^perf", group = "Performance" },
-  { message = "^refactor", group = "Refactor" },
-  { message = "^docs", group = "Documentation" },
-  { message = "^style", group = "Styling" },
-  { message = "^test", group = "Testing" },
-  { message = "^build", group = "Build" },
-  { message = "^ci", group = "CI" },
-  { message = "^chore", group = "Miscellaneous" },
-  { message = "^revert", group = "Reverted" },
+  { message = "^feat",     group = "<!-- 0 -->Features" },
+  { message = "^revert",   group = "<!-- 1 -->Reverted" },
+  { message = "^fix",      group = "<!-- 2 -->Bug Fixes" },
+  { message = "^perf",     group = "<!-- 3 -->Performance" },
+  { message = "^refactor", group = "<!-- 4 -->Refactor" },
+  { message = "^build",    group = "<!-- 5 -->Build" },
+  { message = "^docs",     group = "<!-- 6 -->Documentation" },
+  { message = "^ci",       group = "<!-- 7 -->CI" },
+  { message = "^test",     group = "<!-- 8 -->Testing" },
+  { message = "^style",    group = "<!-- 9 -->Styling" },
+  { message = "^chore",    group = "<!-- 10 -->Miscellaneous" },
 ]
 filter_commits = false
 tag_pattern = "[0-9]*"
