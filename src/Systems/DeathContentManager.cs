@@ -28,8 +28,21 @@ namespace DeathCorpses.Systems
         private const string CorpseMigratorKey = "corpse";
         private const int CurrentCorpseVersion = 1;
 
+        private const string RecapMigratorKey = "recap";
+        private const int CurrentRecapVersion = 1;
+
         private ICoreServerAPI _sapi = null!;
         private readonly HashSet<string> _knownCorpseIds = new();
+
+        private record DeathRecapData(
+            EnumDamageType DamageType,
+            EnumDamageSource DamageSource,
+            string? KillerName,
+            Vec3d DeathPos,
+            Vec3d? CorpsePos = null
+        );
+
+        private readonly Dictionary<string, DeathRecapData> _pendingRecaps = new();
 
         public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Server;
 
@@ -76,7 +89,7 @@ namespace DeathCorpses.Systems
 
             foreach (string playerDir in Directory.GetDirectories(basePath))
             {
-                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                foreach (string file in Directory.GetFiles(playerDir, "inventory-*.dat"))
                 {
                     try
                     {
@@ -102,31 +115,63 @@ namespace DeathCorpses.Systems
 
         private void OnPlayerJoin(IServerPlayer byPlayer)
         {
-            
-            if (!Core.Config.DisableVanillaDeathWaypoint)
-                return;
-            var callArgs = new TextCommandCallingArgs();
-            callArgs.Caller = new Caller
+            if (Core.Config.DisableVanillaDeathWaypoint)
             {
-                Player = byPlayer,
-                Entity = byPlayer.Entity
-            };
-            callArgs.RawArgs = new CmdArgs("deathwp false");
+                var callArgs = new TextCommandCallingArgs();
+                callArgs.Caller = new Caller
+                {
+                    Player = byPlayer,
+                    Entity = byPlayer.Entity
+                };
+                callArgs.RawArgs = new CmdArgs("deathwp false");
 
-            _sapi.ChatCommands.Execute("waypoint", callArgs);
+                _sapi.ChatCommands.Execute("waypoint", callArgs);
+            }
 
+            if (Core.Config.DeathRecapDetail != Config.DeathRecapDetailMode.None)
+            {
+                if (_pendingRecaps.ContainsKey(byPlayer.PlayerUID))
+                {
+                    _sapi.Event.RegisterCallback((dt) => TrySendDeathRecap(byPlayer), 2000);
+                }
+                else
+                {
+                    var recap = LoadRecapFromDisk(byPlayer);
+                    if (recap != null)
+                    {
+                        _pendingRecaps[byPlayer.PlayerUID] = recap;
+                        _sapi.Event.RegisterCallback((dt) => TrySendDeathRecap(byPlayer), 2000);
+                    }
+                }
+            }
         }
 
         private void OnEntityDeath(Entity entity, DamageSource damageSource)
         {
             if (entity is EntityPlayer entityPlayer)
             {
-                OnPlayerDeath((IServerPlayer)entityPlayer.Player);
+                OnPlayerDeath((IServerPlayer)entityPlayer.Player, damageSource);
             }
         }
 
-        private void OnPlayerDeath(IServerPlayer byPlayer)
+        private void OnPlayerDeath(IServerPlayer byPlayer, DamageSource damageSource)
         {
+            if (Core.Config.DeathRecapDetail != Config.DeathRecapDetailMode.None)
+            {
+                string? killerName = damageSource?.CauseEntity?.GetName()
+                                  ?? damageSource?.SourceEntity?.GetName();
+
+                _pendingRecaps[byPlayer.PlayerUID] = new DeathRecapData(
+                    DamageType: damageSource?.Type ?? EnumDamageType.Gravity,
+                    DamageSource: damageSource?.Source ?? EnumDamageSource.Unknown,
+                    KillerName: killerName,
+                    DeathPos: byPlayer.Entity.ServerPos.XYZ.Clone()
+                );
+
+                _sapi.Event.RegisterCallback((dt) => TrySendDeathRecap(byPlayer), 3000);
+                _sapi.Event.RegisterCallback((dt) => TrySendDeathRecap(byPlayer, persistOnFail: true), 30000);
+            }
+
             bool isKeepContent = byPlayer.Entity?.Properties?.Server?.Attributes?.GetBool("keepContents") ?? false;
             if (isKeepContent)
             {
@@ -207,6 +252,12 @@ namespace DeathCorpses.Systems
             else
             {
                 corpseEntity.Inventory.DropAll(corpseEntity.Pos.XYZ);
+            }
+
+            if (Core.Config.DeathRecapDetail != Config.DeathRecapDetailMode.None
+                && _pendingRecaps.TryGetValue(byPlayer.PlayerUID, out var recap))
+            {
+                _pendingRecaps[byPlayer.PlayerUID] = recap with { CorpsePos = corpseEntity.ServerPos.XYZ.Clone() };
             }
         }
 
@@ -550,6 +601,149 @@ namespace DeathCorpses.Systems
             });
         }
 
+        private void TrySendDeathRecap(IServerPlayer byPlayer, bool persistOnFail = false)
+        {
+            if (!_pendingRecaps.TryGetValue(byPlayer.PlayerUID, out var recap))
+                return;
+
+            if (byPlayer.Entity == null || !byPlayer.Entity.Alive)
+            {
+                if (persistOnFail)
+                {
+                    _pendingRecaps.Remove(byPlayer.PlayerUID);
+                    SaveRecapToDisk(byPlayer, recap);
+                }
+                return;
+            }
+
+            _pendingRecaps.Remove(byPlayer.PlayerUID);
+
+            string damageType = Lang.Get($"{Constants.ModId}:death-recap-damagetype-{recap.DamageType}");
+
+            string cause;
+            if (recap.KillerName != null)
+            {
+                cause = Lang.Get($"{Constants.ModId}:death-recap-killed-by-entity",
+                    recap.KillerName, damageType);
+            }
+            else
+            {
+                string source = Lang.Get($"{Constants.ModId}:death-recap-source-{recap.DamageSource}");
+                cause = Lang.Get($"{Constants.ModId}:death-recap-killed-by-environment",
+                    source, damageType);
+            }
+
+            var detail = Core.Config.DeathRecapDetail;
+
+            string coords = "";
+            if (detail >= Config.DeathRecapDetailMode.Coordinate)
+            {
+                var spawn = _sapi.World.DefaultSpawnPosition;
+                int x = (int)recap.DeathPos.X - (int)spawn.X;
+                int y = (int)recap.DeathPos.Y;
+                int z = (int)recap.DeathPos.Z - (int)spawn.Z;
+                coords = " " + Lang.Get($"{Constants.ModId}:death-recap-coordinates", x, y, z);
+            }
+
+            string distance = "";
+            if (detail >= Config.DeathRecapDetailMode.Distance && recap.CorpsePos != null)
+            {
+                double dist = byPlayer.Entity.ServerPos.XYZ.DistanceTo(recap.CorpsePos);
+                distance = " " + Lang.Get($"{Constants.ModId}:death-recap-corpse-distance", (int)dist);
+            }
+
+            byPlayer.SendMessage(cause + coords + distance);
+        }
+
+        private string GetRecapDataDir(string playerUID)
+        {
+            string uidFixed = Regex.Replace(playerUID, "[^0-9a-zA-Z]", "");
+            string localPath = Path.Combine("ModData", _sapi.World.SavegameIdentifier, Mod.Info.ModID, uidFixed);
+            return _sapi.GetOrCreateDataPath(localPath);
+        }
+
+        private void SaveRecapToDisk(IServerPlayer player, DeathRecapData recap)
+        {
+            var tree = new TreeAttribute();
+            tree.SetInt("version", CurrentRecapVersion);
+            tree.SetInt("damageType", (int)recap.DamageType);
+            tree.SetInt("damageSource", (int)recap.DamageSource);
+            if (recap.KillerName != null) tree.SetString("killerName", recap.KillerName);
+            tree.SetDouble("deathX", recap.DeathPos.X);
+            tree.SetDouble("deathY", recap.DeathPos.Y);
+            tree.SetDouble("deathZ", recap.DeathPos.Z);
+            if (recap.CorpsePos != null)
+            {
+                tree.SetDouble("corpseX", recap.CorpsePos.X);
+                tree.SetDouble("corpseY", recap.CorpsePos.Y);
+                tree.SetDouble("corpseZ", recap.CorpsePos.Z);
+            }
+
+            string dir = GetRecapDataDir(player.PlayerUID);
+            File.WriteAllBytes(Path.Combine(dir, "death-recap.dat"), tree.ToBytes());
+        }
+
+        private DeathRecapData? LoadRecapFromDisk(IServerPlayer player)
+        {
+            string path = Path.Combine(GetRecapDataDir(player.PlayerUID), "death-recap.dat");
+            if (!File.Exists(path)) return null;
+
+            var tree = new TreeAttribute();
+            tree.FromBytes(File.ReadAllBytes(path));
+            File.Delete(path);
+
+            int fileVersion = tree.GetInt("version", 0);
+            if (fileVersion < CurrentRecapVersion)
+            {
+                var migrator = DataMigrationRegistry.GetMigrator(RecapMigratorKey);
+                if (migrator != null)
+                {
+                    tree = migrator.Migrate(tree, fileVersion, CurrentRecapVersion, Mod.Logger);
+                }
+            }
+            else if (fileVersion > CurrentRecapVersion)
+            {
+                Mod.Logger.Warning($"Death recap file for '{player.PlayerName}' version {fileVersion} " +
+                    $"is newer than current version {CurrentRecapVersion}, loading with best effort.");
+            }
+
+            Vec3d? corpsePos = tree.HasAttribute("corpseX")
+                ? new Vec3d(tree.GetDouble("corpseX"), tree.GetDouble("corpseY"), tree.GetDouble("corpseZ"))
+                : null;
+
+            return new DeathRecapData(
+                DamageType: (EnumDamageType)tree.GetInt("damageType"),
+                DamageSource: (EnumDamageSource)tree.GetInt("damageSource"),
+                KillerName: tree.GetString("killerName"),
+                DeathPos: new Vec3d(tree.GetDouble("deathX"), tree.GetDouble("deathY"), tree.GetDouble("deathZ")),
+                CorpsePos: corpsePos
+            );
+        }
+
+        public int ClearAllRecaps()
+        {
+            int count = _pendingRecaps.Count;
+            _pendingRecaps.Clear();
+
+            string basePath = _sapi.GetOrCreateDataPath(
+                Path.Combine("ModData", _sapi.World.SavegameIdentifier, Mod.Info.ModID));
+
+            if (Directory.Exists(basePath))
+            {
+                foreach (string playerDir in Directory.GetDirectories(basePath))
+                {
+                    string recapFile = Path.Combine(playerDir, "death-recap.dat");
+                    if (File.Exists(recapFile))
+                    {
+                        File.Delete(recapFile);
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
         public string GetDeathDataPath(IPlayer player)
         {
             ICoreAPI api = player.Entity.Api;
@@ -562,7 +756,7 @@ namespace DeathCorpses.Systems
         {
             string path = GetDeathDataPath(player);
             return Directory
-                .GetFiles(path)
+                .GetFiles(path, "inventory-*.dat")
                 .OrderByDescending(f => new FileInfo(f).Name)
                 .ToArray();
         }
@@ -647,7 +841,7 @@ namespace DeathCorpses.Systems
 
             foreach (string playerDir in Directory.GetDirectories(basePath))
             {
-                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                foreach (string file in Directory.GetFiles(playerDir, "inventory-*.dat"))
                 {
                     try
                     {
@@ -731,7 +925,7 @@ namespace DeathCorpses.Systems
                     continue;
                 }
 
-                foreach (string file in Directory.GetFiles(playerDir, "*.dat"))
+                foreach (string file in Directory.GetFiles(playerDir, "inventory-*.dat"))
                 {
                     records.Add((file, playerDir));
                 }

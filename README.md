@@ -34,6 +34,7 @@ A single zip works on both versions — the mod auto-detects the runtime at star
 - **Corpse Compass** — Craftable item that highlights nearby corpses with a HUD indicator.
 - **Obituary** — Purchasable from traders. Bind to a random player's corpse, then hold to see particle trails pointing toward its general area. Fades into a collectible **Faded Obituary** once the corpse is collected.
 - **Random Corpse** — Optional mode that spawns corpses at a random location within a configurable radius of the death point, with no waypoint.
+- **Death Recap** — On respawn, receive a chat message summarizing what killed you. Admins control how much detail to reveal: just the cause, cause + coordinates, or cause + coordinates + distance to corpse.
 
 ### Commands
 
@@ -48,6 +49,7 @@ All commands require the privilege configured in `CommandPrivilege` (default: `g
 | `/dc corpse tpother <target player> <corpse owner> [id]` | Teleports another player to a corpse. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc corpse fetch <player> [id]` | Moves a player's corpse entity to your current position. `id` is the index from `list` (default: `0`, most recent) |
 | `/dc corpse fetchto <player> <x> <y> <z> [id]` | Moves a player's corpse entity to the specified coordinates. `id` is the index from `list` (default: `0`, most recent) |
+| `/dc recap clear` | Removes all pending death recaps from memory and disk |
 | `/dc config list` | Shows all config options and their current values |
 | `/dc config get <option>` | Shows the current value of a specific config option |
 | `/dc config set <option> <value>` | Changes a config option at runtime and saves it to disk |
@@ -81,6 +83,7 @@ The config file is created at `ModConfig/deathcorpses.json` on first run. All se
 | `RandomCorpse` | `false` | If true, disables waypoint creation and spawns the corpse at a random location within `RandomCorpseRadius` blocks of the death point |
 | `RandomCorpseRadius` | `5000` | Maximum radius (in blocks) from the death point where the corpse can spawn when `RandomCorpse` is enabled (1–10000) |
 | `DebugMode` | `false` | Broadcasts internal corpse creation/collection messages to all players |
+| `DeathRecapDetail` | `Cause` | Detail level for the death recap message shown on respawn: `None` (disabled), `Cause` (killer + damage type), `Coordinate` (+ death location), `Distance` (+ distance to corpse) |
 
 ---
 

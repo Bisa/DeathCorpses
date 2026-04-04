@@ -49,6 +49,10 @@ namespace DeathCorpses
         public bool RemoveWaypointOnCollect { get; set; } = true;
         public bool DebugMode { get; set; } = false;
 
+        [Description("Detail level for the death recap message shown on respawn (None to disable, Cause, Coordinate, Distance)")]
+        public DeathRecapDetailMode DeathRecapDetail { get; set; } = DeathRecapDetailMode.Cause;
+        public enum DeathRecapDetailMode { None, Cause, Coordinate, Distance };
+
         [Description("Makes corpses available to everyone after N in-game hours (0 - always, below zero - never)")]
         public int FreeCorpseAfterTime { get; set; } = 240;
 

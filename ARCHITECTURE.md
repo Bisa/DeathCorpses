@@ -194,7 +194,9 @@ Loader.StartClientSide()
 
 ```
 Player dies
-  → OnEntityDeath() → OnPlayerDeath()
+  → OnEntityDeath(entity, damageSource) → OnPlayerDeath(player, damageSource)
+  → capture DeathRecapData (if DeathRecapDetail != None)
+  → schedule recap delivery callbacks (3s optimistic, 30s persist-to-disk fallback)
   → check keepContents flag (skip if true)
   → CreateCorpseEntity()
       copy player UID, name, timestamp
@@ -251,6 +253,21 @@ Bound obituary
 Faded obituary
   → inert flavor item
 ```
+
+### Death Recap
+
+On death, `DeathContentManager` captures damage source metadata into a `DeathRecapData` record (stored in-memory keyed by player UID). On respawn, a chat message is sent with detail controlled by `DeathRecapDetail`:
+
+- **Cause** — killer name + damage type (always shown)
+- **Coordinate** — adds death coordinates (always the death point, never the corpse's randomized position)
+- **Distance** — adds distance from respawn point to corpse (omitted when no corpse exists)
+
+**Delivery flow:**
+1. 3s callback after death: send if player is alive; no-op otherwise
+2. 30s callback: if still undelivered, persist to `death-recap.dat` and free memory
+3. On next `PlayerJoin`: load from disk and deliver
+
+**Persistence path:** `ModData/{WorldId}/deathcorpses/{PlayerUID}/death-recap.dat` — same directory as corpse saves, deleted after delivery. Versioned with `DataMigrationRegistry` (key: `recap`, current version: 1).
 
 ## Persistence
 
@@ -324,6 +341,7 @@ All commands require the privilege set in `Config.CommandPrivilege` (default: `g
 /dc corpse tpother <target> <owner> [id]         # Teleport another player to corpse
 /dc corpse fetch <player> [id]                   # Teleport corpse to caller
 /dc corpse fetchto <player> <x> <y> <z> [id]    # Teleport corpse to coordinates
+/dc recap clear                                  # Remove all pending death recaps (memory + disk)
 /dc config list                                  # List all config options
 /dc config get <option>                          # Show a config value
 /dc config set <option> <value>                  # Change a config value at runtime

@@ -33,5 +33,31 @@
   "obituaries-trail-cold": "The trail to {0}'s corpse has gone cold... the ink fades before your eyes",
   "obituaries-faded-desc": "A faded record of {0}'s passing",
 
-  "death-waypoint-name": "Death: {0}"
+  "death-waypoint-name": "Death: {0}",
+
+  "death-recap-killed-by-entity": "Death Recap: Slain by {0} ({1}).",
+  "death-recap-killed-by-environment": "Death Recap: Killed by {0} ({1}).",
+  "death-recap-coordinates": "Died at {0}, {1}, {2}.",
+  "death-recap-corpse-distance": "Your corpse is {0} blocks away.",
+  "death-recap-damagetype-BluntAttack": "blunt damage",
+  "death-recap-damagetype-SlashingAttack": "slashing damage",
+  "death-recap-damagetype-PiercingAttack": "piercing damage",
+  "death-recap-damagetype-Fire": "fire damage",
+  "death-recap-damagetype-Poison": "poison",
+  "death-recap-damagetype-Gravity": "fall damage",
+  "death-recap-damagetype-Suffocation": "suffocation",
+  "death-recap-damagetype-Injury": "injury",
+  "death-recap-damagetype-Electricity": "electricity",
+  "death-recap-damagetype-Heal": "healing",
+  "death-recap-source-Fall": "falling",
+  "death-recap-source-Drown": "drowning",
+  "death-recap-source-Entity": "creature",
+  "death-recap-source-Block": "block",
+  "death-recap-source-Weather": "weather",
+  "death-recap-source-Explosion": "explosion",
+  "death-recap-source-Internal": "unknown cause",
+  "death-recap-source-Suicide": "self",
+  "death-recap-source-Unknown": "unknown cause",
+  "death-recap-source-Machine": "machine",
+  "death-recap-source-Player": "player"
 }

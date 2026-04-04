@@ -81,6 +81,13 @@ namespace DeathCorpses.Systems
                         .HandleWith(FetchCorpseToCoords)
                     .EndSubCommand()
                 .EndSubCommand()
+                .BeginSubCommand("recap")
+                    .WithDescription("Manage pending death recaps")
+                    .BeginSubCommand("clear")
+                        .WithDescription("Remove all pending death recaps from memory and disk")
+                        .HandleWith(ClearRecaps)
+                    .EndSubCommand()
+                .EndSubCommand()
                 .BeginSubCommand("config")
                     .WithDescription("View or change config settings")
                     .BeginSubCommand("list")
@@ -523,6 +530,14 @@ namespace DeathCorpses.Systems
             return TextCommandResult.Success(Lang.Get(
                 "Restored corpse inventory from {0} to {1} (index {2})",
                 player.PlayerName, giveToPlayer.PlayerName, id));
+        }
+
+        // --- Recap commands ---
+
+        private TextCommandResult ClearRecaps(TextCommandCallingArgs args)
+        {
+            int count = _deathContentManager.ClearAllRecaps();
+            return TextCommandResult.Success(Lang.Get("Cleared {0} pending death recap(s)", count));
         }
 
         // --- Config commands ---
