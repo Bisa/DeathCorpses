@@ -141,7 +141,7 @@ sha256sum deathcorpses-<version>.zip
 git clone https://github.com/Bisa/DeathCorpses
 cd DeathCorpses
 git checkout <version>
-nix build .#zip
+nix build .#release-zip
 sha256sum ./result
 ```
 
@@ -152,13 +152,20 @@ If both hashes match, the artifact on GitHub is exactly what was built from that
 Prereleases (`-rc.N` versions) patch `src/modinfo.json` before building, so a plain `nix build` won't reproduce them. Use the included script to replicate the CI steps:
 
 ```sh
-# Verify prerelease 2.1.0-rc.15 built from the main branch
-./scripts/verify-prerelease.sh 15 main
-
-# Then compare with the release artifact
-gh release download 2.1.0-rc.15 --pattern '*.zip' --dir /tmp
-sha256sum /tmp/deathcorpses-2.1.0-rc.15.zip
+# Verify prerelease 2.6.0-rc.15 built from the main branch
+./scripts/verify-build.sh prerelease 15 main
 ```
+
+### Verifying dev builds
+
+Local dev builds from clean trees (version format `X.Y.Z-dev.N+g<hash>`) are also reproducible:
+
+```sh
+# Reproduce a dev build from a specific commit
+./scripts/verify-build.sh dev abc1234
+```
+
+Dirty tree builds (`dev.0`) are not reproducible since the uncommitted state is unknown.
 
 ---
 

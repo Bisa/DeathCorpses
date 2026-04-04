@@ -70,11 +70,11 @@ jobs:
           MODID=${{ steps.info.outputs.modid }}
           VERSION=${{ steps.info.outputs.version }}
 
-          nix build .#zip
+          nix build .#release-zip
           cp result "${MODID}-${VERSION}.zip"
 
       - name: Verify reproducibility
-        run: nix build .#zip --rebuild
+        run: nix build .#release-zip --rebuild
 
       - name: Generate changelog
         run: |

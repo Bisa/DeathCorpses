@@ -116,13 +116,17 @@ Three assemblies are compiled in parallel:
 
 The loader embeds both impl DLLs as manifest resources. The final zip also includes `.bin` fallback copies (VS 1.22 may strip manifest resources when loading DLLs from bytes).
 
+**Version patching:** The zip assembly step patches `modinfo.json` with the build version. For local builds (`nix build`), this is a `-dev.{revCount}` pre-release suffix compatible with the mod portal's version format (e.g. `2.6.0-dev.142`). The zip filename additionally includes `+g{shortHash}` build metadata for identification. Dirty trees use `dev.0` since `revCount` is unavailable. CI uses `nix build .#release-zip` which uses the base version from `modinfo.json` as-is.
+
+**Mod portal version constraints:** The mod portal ([mods.vintagestory.at](https://mods.vintagestory.at)) validates the `version` field in `modinfo.json` against `/^(\d+)\.(\d+)\.(\d+)(?:-(dev|pre|rc)\.(\d+))?$/` ([source](https://github.com/anegostudios/vsmoddb/blob/master/lib/version.php)). Only three pre-release keywords are allowed (`dev`, `pre`, `rc`), each followed by a single integer (max 4095). Build metadata (`+...`), additional dot-separated identifiers, and arbitrary pre-release labels are all rejected. Any version written into `modinfo.json` must conform to this format or the upload will fail.
+
 **Output:**
 ```
 deathcorpses-{version}.zip
 ├── deathcorpses.dll           # Loader (the only DLL VS sees)
 ├── deathcorpses-net8.bin      # Fallback impl for .NET 8
 ├── deathcorpses-net10.bin     # Fallback impl for .NET 10
-├── modinfo.json
+├── modinfo.json               # Version patched to match build version
 ├── assets/
 └── README.md
 ```
@@ -379,7 +383,9 @@ Modify `DeathContentManager.OnPlayerDeath()` or `RandomizeCorpsePosition()`. The
 
 ## Releasing
 
-A single workflow `.github/workflows/release.yml` handles both release types. It always produces one zip via `nix build .#zip`.
+A single workflow `.github/workflows/release.yml` handles both release types. CI uses `nix build .#release-zip` which takes the version from `modinfo.json` as-is (CI patches it for prereleases before building).
 
 - **Stable release**: push a tag matching the version in `src/modinfo.json`. Bump the version in `src/modinfo.json` before tagging.
 - **Pre-release**: trigger manually via `workflow_dispatch`. Version is auto-patched to `{base}-rc.{run_number}`.
+
+Local builds (`nix build .#zip` or just `nix build`) always produce a dev-suffixed version to distinguish them from tagged releases.

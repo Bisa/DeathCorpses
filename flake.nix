@@ -21,9 +21,27 @@
 
         cleanSrc = lib.cleanSource ./src;
 
-        # Append git short hash for local dirty builds to distinguish from clean releases.
-        nixVersion =
-          if self ? dirtyShortRev then "${modBaseVersion}+${self.dirtyShortRev}"
+        # For local builds, append a semver pre-release suffix so the mod
+        # is clearly distinguishable from tagged releases.
+        # The mod portal (mods.vintagestory.at) validates: /^(\d+)\.(\d+)\.(\d+)(?:-(dev|pre|rc)\.(\d+))?$/
+        # so modinfo.json must use exactly -dev.{integer} with no build metadata.
+        # The zip filename includes +g{hash} for local identification.
+        shortHash =
+          if self ? shortRev then self.shortRev
+          else builtins.substring 0 7 self.dirtyRev;
+
+        devN = if self ? revCount then toString self.revCount else "0";
+
+        # Portal-compatible version for modinfo.json (no build metadata).
+        nixModVersion =
+          if self ? rev || self ? dirtyRev then
+            "${modBaseVersion}-dev.${devN}"
+          else modBaseVersion;
+
+        # Extended version with git hash for zip filename.
+        nixZipVersion =
+          if self ? rev || self ? dirtyRev then
+            "${modBaseVersion}-dev.${devN}+g${shortHash}"
           else modBaseVersion;
 
         # .NET SDK for a given target
@@ -54,7 +72,7 @@
         # manifest resources so the loader never needs Assembly.Location or the file system.
         loaderDll = pkgs.buildDotnetModule {
           pname = "${modId}-loader";
-          version = nixVersion;
+          version = nixModVersion;
           src = cleanSrc;
           projectFile = "Loader/Loader.csproj";
           nugetDeps = ./src/Loader/deps.json;
@@ -82,7 +100,7 @@
           in
           pkgs.buildDotnetModule {
             pname = "${modId}-impl-${implSuffix}";
-            version = nixVersion;
+            version = nixModVersion;
             src = cleanSrc;
             projectFile = "${modId}.csproj";
             nugetDeps = ./src/deps/${t.targetFramework}.json;
@@ -110,19 +128,20 @@
         implNet8 = mkImpl "net8" "net8";
         implNet10 = mkImpl "net10" "net10";
 
-      in
-      {
-        # Build the single combined zip (default target)
-        packages.default = self.packages.${system}.zip;
-
-        packages.zip =
-          pkgs.runCommand "${modId}-${nixVersion}.zip" { buildInputs = [ pkgs.zip ]; } ''
+        # zipVersion: used for the output filename (may contain build metadata).
+        # modVersion: written into modinfo.json (must be portal-compatible).
+        mkZip = { zipVersion, modVersion }:
+          pkgs.runCommand "${modId}-${zipVersion}.zip" { buildInputs = [ pkgs.zip pkgs.jq ]; } ''
             mkdir -p staging
 
             # Static assets, modinfo (patched for minimum VS version), icon — from net8 impl
             cp -r ${implNet8}/. staging/
             # Remove build artefacts; impl assemblies are loaded by the loader at runtime
             rm -f staging/*.dll staging/*.deps.json staging/*.pdb staging/*.runtimeconfig.json
+
+            # Patch modinfo version to match the build version
+            jq --arg v "${modVersion}" '.version = $v' staging/modinfo.json > staging/modinfo.tmp \
+              && mv staging/modinfo.tmp staging/modinfo.json
 
             # Loader DLL (contains embedded net8 + net10 impl assemblies)
             cp ${loaderDll}/${modId}.dll staging/
@@ -139,6 +158,24 @@
             find . -exec touch -t 198001010000.00 {} +
             find . | sort | zip -X -@ $out
           '';
+
+      in
+      {
+        # Build the single combined zip (default target)
+        packages.default = self.packages.${system}.zip;
+
+        # Local dev build: modinfo gets portal-compatible -dev.N, filename also has +ghash.
+        packages.zip = mkZip {
+          zipVersion = nixZipVersion;
+          modVersion = nixModVersion;
+        };
+
+        # CI release target — uses the base version from modinfo.json as-is
+        # (CI patches modinfo.json before building for prereleases).
+        packages.release-zip = mkZip {
+          zipVersion = modBaseVersion;
+          modVersion = modBaseVersion;
+        };
 
         # Usage: nix build .#fetch-deps-net8 && ./result ./deps/net8.0.json
         packages.fetch-deps-net8 = implNet8.passthru.fetch-deps;
