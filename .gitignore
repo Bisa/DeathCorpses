@@ -15,6 +15,7 @@ obj
 
 # nix
 /result
+.direnv
 
 # Generated changelogs (preview locally, CI produces at release time)
 RELEASE_NOTES.md
