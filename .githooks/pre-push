@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Pre-push hook: warn (non-blocking) if commits lack DCO sign-off.
+
+yellow='\033[1;33m'
+dim='\033[2m'
+cyan='\033[0;36m'
+reset='\033[0m'
+
+remote="$1"
+url="$2"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+    continue # branch deletion
+  fi
+
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  warned=0
+  for sha in $(git rev-list --no-merges "$range" 2>/dev/null); do
+    if ! git log -1 --format='%B' "$sha" | grep -qP '^Signed-off-by: .+ <.+>'; then
+      if [ "$warned" -eq 0 ]; then
+        echo "" >&2
+        warned=1
+      fi
+      echo -e "${yellow}[DCO WARNING]${reset} Commit ${cyan}$(git log -1 --format='%h' "$sha")${reset} ${dim}$(git log -1 --format='%s' "$sha")${reset} is missing Signed-off-by." >&2
+    fi
+  done
+  if [ "$warned" -eq 1 ]; then
+    echo -e "  See ${cyan}CONTRIBUTING.md${reset} for how to add sign-off to your commits." >&2
+    echo "" >&2
+  fi
+done
+
+exit 0
