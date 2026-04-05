@@ -22,7 +22,7 @@ Git can do this automatically with the `-s` flag:
 git commit -s -m "your commit message"
 ```
 
-The name and email must match your Git identity. Commits without a valid sign-off will not be accepted.
+The name and email must match your Git identity. Commits without a valid sign-off will not be accepted. The DCO check in CI is skipped for PRs opened by the repository owner.
 
 ### Finding commits that are not signed
 
@@ -68,7 +68,17 @@ This replays every commit on your branch and adds `Signed-off-by` to each one.
 
 1. Fork the repository and create a branch for your changes.
 2. Make your changes with signed off commits.
-3. Open a pull request describing what you changed and why.
+3. Preview your PR locally:
+   ```sh
+   ./scripts/generate-pr.sh
+   ```
+4. Submit when ready:
+   ```sh
+   ./scripts/generate-pr.sh --submit
+   ```
+   The script generates the PR description from your commit history using [git-cliff](https://git-cliff.org/), and targets the upstream repository even when run from a fork.
+
+   If you prefer to create the PR manually, open a pull request describing what you changed and why.
 
 ## Questions
 

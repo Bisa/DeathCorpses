@@ -24,6 +24,7 @@ There is no test suite.
 ## Rules
 
 - **Always update ARCHITECTURE.md** when making code changes that affect the mod's structure, data flows, commands, config properties, persistence formats, or build pipeline. Read the "Maintaining This Document" section at the top of ARCHITECTURE.md for the full list of triggers. Propose these edits alongside your code changes, not as a follow-up.
+- **When suggesting commit messages**, remind the user they can run `./scripts/generate-pr.sh` to preview a PR, or `--submit` to create it.
 
 ## Self-Maintenance
 

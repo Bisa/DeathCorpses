@@ -21,6 +21,8 @@ Do not silently skip this step. If you are unsure whether a change warrants an u
 
 **If you are a Claude Code agent**, read `CLAUDE.md` before making any changes — it contains Claude-specific instructions, constraints, and workflow rules for this project.
 
+**If you want to contribute**, read [CONTRIBUTING.md](CONTRIBUTING.md) for DCO sign-off requirements, PR workflow, and submission instructions.
+
 ## Overview
 
 DeathCorpses is a Vintage Story mod that spawns lootable corpse entities when players die. It preserves the player's inventory in the corpse and creates a map waypoint for navigation. The mod ships as a single zip supporting both VS 1.21 (.NET 8) and VS 1.22+ (.NET 10) through a dual-target compilation strategy with a thin runtime loader.
@@ -354,6 +356,7 @@ All commands require the privilege set in `Config.CommandPrivilege` (default: `g
 ## Project Conventions
 
 - **Conventional Commits** — all commit messages must follow `<type>[scope]: <description>`. Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. A local hook (`.githooks/commit-msg`) and CI workflow (`.github/workflows/commits.yml`) enforce this. Changelogs are generated from these commits using `git-cliff` (`cliff.toml`).
+- **DCO Sign-Off** — external contributors must include a `Signed-off-by` line in their commits (see [CONTRIBUTING.md](CONTRIBUTING.md)). A CI workflow (`.github/workflows/dco.yml`) enforces this on PRs. The check is skipped for PRs opened by the repository owner. A local `pre-push` hook (`.githooks/pre-push`) warns about unsigned commits before pushing.
 - **Semantic Versioning** — the mod version in `src/modinfo.json` follows semver (`MAJOR.MINOR.PATCH`). Bump it as part of any code change: **MINOR** for new features or backwards-compatible additions (`feat`), **PATCH** for bug fixes (`fix`). MAJOR bumps are reserved for breaking changes (config renames, removed commands, save format incompatibilities). Propose the version bump alongside your code changes, not as a follow-up.
 - **Update README.md** when adding or removing user-facing functionality — especially admin commands and configuration settings.
 
