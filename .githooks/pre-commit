@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Pre-commit hook: warn when committing directly to main or master.
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  yellow='\033[1;33m'
+  reset='\033[0m'
+  echo "" >&2
+  echo -e "${yellow}[WARNING]${reset} You are committing directly to ${branch}." >&2
+  echo "  Consider working on a feature branch instead." >&2
+  echo "" >&2
+  sleep 3
+fi

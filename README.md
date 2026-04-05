@@ -171,6 +171,8 @@ Dirty tree builds (`dev.0`) are not reproducible since the uncommitted state is 
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to submit changes, including DCO sign-off requirements and PR workflow.
+
 This project uses [Conventional Commits](https://www.conventionalcommits.org/). All commit messages must follow the format:
 
 ```
@@ -179,15 +181,15 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 
-A local git hook validates messages before commit. It is configured automatically when entering the dev shell:
+Local git hooks validate commit messages and DCO sign-off. They are configured automatically when entering the dev shell:
 
 ```sh
 nix develop
 ```
 
-If you don't use `nix develop`, enable it manually: `git config --local core.hooksPath .githooks`
+If you don't use `nix develop`, enable them manually: `git config --local core.hooksPath .githooks`
 
-PR commits are also validated in CI.
+PR commits are also validated in CI (DCO sign-off is enforced for external contributors; the repo owner is exempt).
 
 ---
 
