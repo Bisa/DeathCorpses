@@ -117,11 +117,22 @@ namespace DeathCorpses.Lib.Config
                     {
                         ConfigUtil.LoadConfig(_api, type, ref config, out var loadedVersion, Mod.Logger);
                         var configAttr = type.GetCustomAttribute<ConfigAttribute>() ?? throw new ArgumentException($"{type} is not a config");
-                        if (configAttr.Version != loadedVersion)
+                        var path = Path.Combine(GamePaths.ModConfig, configAttr.Filename);
+                        if (!File.Exists(path))
+                        {
+                            Mod.Logger.Notification($"Config {FormatAssembly(type)} not found, creating new config with defaults");
+                        }
+                        else if (configAttr.Version != loadedVersion)
                         {
                             versionMismatch.Add((configAttr, loadedVersion));
-                            Mod.Logger.Warning($"Config {FormatAssembly(type)} version mismatch {loadedVersion}=>{configAttr.Version}");
-                            var path = Path.Combine(GamePaths.ModConfig, configAttr.Filename);
+                            if (loadedVersion == -1)
+                            {
+                                Mod.Logger.Notification($"Config {FormatAssembly(type)} is legacy (no version), upgrading to version {configAttr.Version}");
+                            }
+                            else
+                            {
+                                Mod.Logger.Warning($"Config {FormatAssembly(type)} version mismatch {loadedVersion}=>{configAttr.Version}");
+                            }
                             File.Copy(path, path + ".bak", true);
                         }
                         if (loadedVersion > configAttr.Version)
