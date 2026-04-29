@@ -10,7 +10,11 @@
       "stock": { "avg": 1, "var": 1 },
       "price": { "avg": 5, "var": 2 }
     },
-    "side": "server"
+    "side": "server",
+    "condition": {
+      "when": "deathcorpses:ObituariesEnabled",
+      "isValue": "true"
+    }
   },
   {
     "file": "game:config/tradelists/trader-treasurehunter.json",
@@ -23,6 +27,10 @@
       "stock": { "avg": 1, "var": 2 },
       "price": { "avg": 3, "var": 1 }
     },
-    "side": "server"
+    "side": "server",
+    "condition": {
+      "when": "deathcorpses:ObituariesEnabled",
+      "isValue": "true"
+    }
   }
 ]
