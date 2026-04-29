@@ -18,7 +18,7 @@ Forked from the adapted [PlayerGrave](https://mods.vintagestory.at/show/mod/3944
 
 ## Requirements
 
-- Vintage Story `>= 1.21.6` (.NET 8) or `>= 1.22.0` (.NET 10)
+- Vintage Story `>= 1.21.6` (.NET 8) or `>= 1.22` (.NET 10)
 
 A single zip works on both versions — the mod auto-detects the runtime at startup.
 
@@ -104,7 +104,7 @@ nix build .#zip
 The zip contains a single `deathcorpses.dll` that embeds two compiled variants:
 
 - `deathcorpses-net8.bin` — impl compiled against VS 1.21.6 (.NET 8)
-- `deathcorpses-net10.bin` — impl compiled against VS 1.22.0 (.NET 10)
+- `deathcorpses-net10.bin` — impl compiled against VS 1.22 (.NET 10)
 
 At startup the loader checks `Environment.Version.Major` and loads the matching variant from its own manifest resources. This avoids the `MissingFieldException` caused by `Entity.Pos` changing from a field in VS 1.21 to a property in VS 1.22, while keeping a single zip for all supported versions.
 

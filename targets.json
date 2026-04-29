@@ -1,9 +1,9 @@
 {
   "net10": {
     "targetFramework": "net10.0",
-    "gameVersion": "1.22.0-rc.8",
-    "channel": "unstable",
-    "hash": "sha256-bnQiKo1Iy5D14SfX7qEmuMevQQXztd4xALbb34hg0Mc="
+    "gameVersion": "1.22.1",
+    "channel": "stable",
+    "hash": "sha256-WO8D5YUJMenmblCeTeiRKkEIcOP907Ftcp+nETYMYKc="
   },
   "net8": {
     "targetFramework": "net8.0",

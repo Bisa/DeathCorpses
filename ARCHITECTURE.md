@@ -113,7 +113,7 @@ Three assemblies are compiled in parallel:
 | Assembly | Project | Target | Output |
 |---|---|---|---|
 | Impl (net8) | `deathcorpses.csproj` | net8.0 / VS 1.21.6 | `deathcorpses-net8.dll` |
-| Impl (net10) | `deathcorpses.csproj` | net10.0 / VS 1.22.0 | `deathcorpses-net10.dll` |
+| Impl (net10) | `deathcorpses.csproj` | net10.0 / VS 1.22 | `deathcorpses-net10.dll` |
 | Loader | `Loader/Loader.csproj` | net8.0 | `deathcorpses.dll` |
 
 The loader embeds both impl DLLs as manifest resources. The final zip also includes `.bin` fallback copies (VS 1.22 may strip manifest resources when loading DLLs from bytes).
