@@ -78,6 +78,9 @@
           nugetDeps = ./src/Loader/deps.json;
           dotnet-sdk = pkgs.dotnet-sdk_8;
           selfContained = false;
+          # Override the RID-derived PlatformTarget=x64 so the managed assembly is AnyCPU/MSIL.
+          # Without this, the PE header is stamped AMD64 and ARM64 .NET runtimes refuse to load it.
+          dotnetBuildFlags = [ "/p:PlatformTarget=AnyCPU" ];
           preBuild = ''
             export VintageStoryInstallDir="${vsLibsNet8}"
             # Stage impl assemblies as .impl files for EmbeddedResource pickup by dotnet build
@@ -107,7 +110,8 @@
             dotnet-sdk = sdkFor t;
             selfContained = false;
             nativeBuildInputs = [ pkgs.jq ];
-            dotnetBuildFlags = [ "/p:AssemblyName=${modId}-${implSuffix}" ];
+            # PlatformTarget=AnyCPU: see loaderDll comment — required for ARM64 compatibility.
+            dotnetBuildFlags = [ "/p:AssemblyName=${modId}-${implSuffix}" "/p:PlatformTarget=AnyCPU" ];
             postPatch = ''
               substituteInPlace ${modId}.csproj \
                 --replace-fail 'net8.0' '${t.targetFramework}'
